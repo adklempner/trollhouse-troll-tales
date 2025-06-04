@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { MessageCircle, X, Send } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { MessageCircle, X, Send, GripLines } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { wakuService, WakuMessage } from '@/services/wakuService';
@@ -33,6 +33,9 @@ const Trollbox = () => {
   const [wakuStatus, setWakuStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [isSigning, setIsSigning] = useState(false);
+  const [dimensions, setDimensions] = useState({ width: 320, height: 384 });
+  const [isResizing, setIsResizing] = useState(false);
+  const chatRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -72,9 +75,43 @@ const Trollbox = () => {
     }).catch(() => {
       setWakuStatus('disconnected');
     });
-
-    //return cleanup;
   }, []);
+
+  // Resize functionality
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing || !chatRef.current) return;
+      
+      const rect = chatRef.current.getBoundingClientRect();
+      const newWidth = Math.max(280, e.clientX - rect.left + 10);
+      const newHeight = Math.max(200, e.clientY - rect.top + 10);
+      
+      setDimensions({ width: newWidth, height: newHeight });
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'nw-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isResizing]);
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
 
   const handleWalletChange = async (newWallet: WalletInfo | null) => {
     setWallet(newWallet);
@@ -195,7 +232,16 @@ const Trollbox = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-80 h-96 flex flex-col resize overflow-hidden">
+        <div 
+          ref={chatRef}
+          className="bg-white border border-gray-200 rounded-lg shadow-xl flex flex-col overflow-hidden relative"
+          style={{ 
+            width: `${dimensions.width}px`, 
+            height: `${dimensions.height}px`,
+            minWidth: '280px',
+            minHeight: '200px'
+          }}
+        >
           {/* Header */}
           <div className="bg-emerald-600 text-white p-3 rounded-t-lg flex items-center justify-between flex-shrink-0">
             <div className="flex items-center space-x-2">
@@ -272,6 +318,14 @@ const Trollbox = () => {
                 <Send className="w-4 h-4" />
               </Button>
             </form>
+          </div>
+
+          {/* Resize Handle */}
+          <div
+            className="absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize flex items-center justify-center text-gray-400 hover:text-gray-600"
+            onMouseDown={handleResizeStart}
+          >
+            <GripLines className="w-3 h-3 rotate-45" />
           </div>
         </div>
       )}
