@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { wakuService, WakuMessage } from '@/services/wakuService';
 import { walletService, WalletInfo } from '@/services/walletService';
+import { ensService } from '@/services/ensService';
 import WalletConnection from './WalletConnection';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,6 +16,7 @@ interface Message {
   author: string;
   walletAddress?: string;
   signature?: string;
+  displayName?: string; // ENS name or formatted address
 }
 
 const Trollbox = () => {
@@ -40,7 +42,7 @@ const Trollbox = () => {
     wakuService.getDispatcher().then(() => {
       setWakuStatus('connected');
 
-      wakuService.onMessage((wakuMessage: WakuMessage) => {
+      wakuService.onMessage(async (wakuMessage: WakuMessage) => {
         const message: Message = {
           id: wakuMessage.id,
           text: wakuMessage.text,
@@ -49,6 +51,14 @@ const Trollbox = () => {
           walletAddress: wakuMessage.walletAddress,
           signature: wakuMessage.signature
         };
+        
+        // Resolve ENS name if wallet address is available
+        if (message.walletAddress) {
+          message.displayName = await ensService.getDisplayName(
+            message.walletAddress,
+            walletService.formatAddress
+          );
+        }
         
         setMessages(prev => {
           // Avoid duplicates
@@ -65,10 +75,15 @@ const Trollbox = () => {
     //return cleanup;
   }, []);
 
-  const handleWalletChange = (newWallet: WalletInfo | null) => {
+  const handleWalletChange = async (newWallet: WalletInfo | null) => {
     setWallet(newWallet);
     if (newWallet) {
-      setUsername(walletService.formatAddress(newWallet.address));
+      // Try to get ENS name for the connected wallet
+      const displayName = await ensService.getDisplayName(
+        newWallet.address,
+        walletService.formatAddress
+      );
+      setUsername(displayName);
       setIsUsernameSet(true);
     } else {
       setUsername('');
@@ -98,7 +113,10 @@ const Trollbox = () => {
 
     setIsSigning(true);
     try {
-      const displayName = username.trim() || walletService.formatAddress(wallet.address);
+      const displayName = username.trim() || await ensService.getDisplayName(
+        wallet.address,
+        walletService.formatAddress
+      );
       const messageId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
       const timestamp = new Date();
       
@@ -112,7 +130,8 @@ const Trollbox = () => {
         timestamp,
         author: displayName,
         walletAddress: wallet.address,
-        signature
+        signature,
+        displayName
       };
 
       // Add to local state immediately for responsive UI
@@ -196,7 +215,9 @@ const Trollbox = () => {
             {messages.map((message) => (
               <div key={message.id} className="text-sm">
                 <div className="flex items-center space-x-1 text-xs text-gray-500 mb-1">
-                  <span className="font-medium text-emerald-600">{message.author}</span>
+                  <span className="font-medium text-emerald-600">
+                    {message.displayName || message.author}
+                  </span>
                   {message.walletAddress && (
                     <>
                       <span>•</span>
