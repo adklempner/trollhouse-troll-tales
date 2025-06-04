@@ -4,12 +4,17 @@ import { MessageCircle, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { wakuService, WakuMessage } from '@/services/wakuService';
+import { walletService, WalletInfo } from '@/services/walletService';
+import WalletConnection from './WalletConnection';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
   text: string;
   timestamp: Date;
   author: string;
+  walletAddress?: string;
+  signature?: string;
 }
 
 const Trollbox = () => {
@@ -17,7 +22,7 @@ const Trollbox = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '🧌 Welcome to the troll chat! Share your privacy tips!',
+      text: '🧌 Welcome to the troll chat! Connect your wallet to start chatting!',
       timestamp: new Date(Date.now() - 1000 * 60 * 5),
       author: 'Bridge Troll'
     }
@@ -26,6 +31,9 @@ const Trollbox = () => {
   const [username, setUsername] = useState('');
   const [isUsernameSet, setIsUsernameSet] = useState(false);
   const [wakuStatus, setWakuStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+  const [wallet, setWallet] = useState<WalletInfo | null>(null);
+  const [isSigning, setIsSigning] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Initialize Waku service
@@ -37,7 +45,9 @@ const Trollbox = () => {
           id: wakuMessage.id,
           text: wakuMessage.text,
           timestamp: new Date(wakuMessage.timestamp),
-          author: wakuMessage.author
+          author: wakuMessage.author,
+          walletAddress: wakuMessage.walletAddress,
+          signature: wakuMessage.signature
         };
         
         setMessages(prev => {
@@ -52,11 +62,19 @@ const Trollbox = () => {
       setWakuStatus('disconnected');
     });
 
-    // Listen for incoming messages
-
-
     //return cleanup;
   }, []);
+
+  const handleWalletChange = (newWallet: WalletInfo | null) => {
+    setWallet(newWallet);
+    if (newWallet) {
+      setUsername(walletService.formatAddress(newWallet.address));
+      setIsUsernameSet(true);
+    } else {
+      setUsername('');
+      setIsUsernameSet(false);
+    }
+  };
 
   const handleUsernameSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,29 +87,59 @@ const Trollbox = () => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const displayName = username.trim() || 'Anonymous Troll';
-    const messageId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
-    
-    const message: Message = {
-      id: messageId,
-      text: newMessage,
-      timestamp: new Date(),
-      author: displayName
-    };
+    if (!wallet) {
+      toast({
+        title: "Wallet Required",
+        description: "Please connect your wallet to send messages",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    // Add to local state immediately for responsive UI
-    setMessages(prev => [...prev, message]);
-    setNewMessage('');
+    setIsSigning(true);
+    try {
+      const displayName = username.trim() || walletService.formatAddress(wallet.address);
+      const messageId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
+      const timestamp = new Date();
+      
+      // Create message for signing
+      const messageToSign = `${newMessage}|${timestamp.getTime()}|${messageId}`;
+      const signature = await walletService.signMessage(messageToSign);
 
-    // Send via Waku
-    const wakuMessage: WakuMessage = {
-      id: message.id,
-      text: message.text,
-      timestamp: message.timestamp.getTime(),
-      author: message.author
-    };
+      const message: Message = {
+        id: messageId,
+        text: newMessage,
+        timestamp,
+        author: displayName,
+        walletAddress: wallet.address,
+        signature
+      };
 
-    await wakuService.sendMessage(wakuMessage);
+      // Add to local state immediately for responsive UI
+      setMessages(prev => [...prev, message]);
+      setNewMessage('');
+
+      // Send via Waku
+      const wakuMessage: WakuMessage = {
+        id: message.id,
+        text: message.text,
+        timestamp: message.timestamp.getTime(),
+        author: message.author,
+        walletAddress: message.walletAddress,
+        signature: message.signature
+      };
+
+      await wakuService.sendMessage(wakuMessage);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      toast({
+        title: "Failed to Send",
+        description: "Could not sign and send message",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSigning(false);
+    }
   };
 
   const formatTime = (date: Date) => {
@@ -149,8 +197,19 @@ const Trollbox = () => {
               <div key={message.id} className="text-sm">
                 <div className="flex items-center space-x-1 text-xs text-gray-500 mb-1">
                   <span className="font-medium text-emerald-600">{message.author}</span>
+                  {message.walletAddress && (
+                    <>
+                      <span>•</span>
+                      <span className="text-blue-600" title={message.walletAddress}>
+                        {walletService.formatAddress(message.walletAddress)}
+                      </span>
+                    </>
+                  )}
                   <span>•</span>
                   <span>{formatTime(message.timestamp)}</span>
+                  {message.signature && (
+                    <span className="text-green-600" title="Verified">✓</span>
+                  )}
                 </div>
                 <div className="bg-white rounded p-2 border">
                   {message.text}
@@ -160,9 +219,11 @@ const Trollbox = () => {
           </div>
 
           {/* Input Area */}
-          <div className="p-3 border-t bg-white rounded-b-lg">
-            {!isUsernameSet && (
-              <form onSubmit={handleUsernameSubmit} className="mb-2">
+          <div className="p-3 border-t bg-white rounded-b-lg space-y-2">
+            <WalletConnection onWalletChange={handleWalletChange} />
+            
+            {!wallet && !isUsernameSet && (
+              <form onSubmit={handleUsernameSubmit}>
                 <div className="flex space-x-2">
                   <Input
                     placeholder="Your troll name (optional)"
@@ -180,18 +241,20 @@ const Trollbox = () => {
                 </div>
               </form>
             )}
+            
             <form onSubmit={handleSendMessage} className="flex space-x-2">
               <Input
-                placeholder="Type your message..."
+                placeholder={wallet ? "Type your message..." : "Connect wallet to chat..."}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="flex-1 text-sm"
+                disabled={!wallet}
               />
               <Button 
                 type="submit" 
                 size="icon" 
                 className="bg-emerald-600 hover:bg-emerald-700"
-                disabled={wakuStatus !== 'connected'}
+                disabled={wakuStatus !== 'connected' || !wallet || isSigning}
               >
                 <Send className="w-4 h-4" />
               </Button>

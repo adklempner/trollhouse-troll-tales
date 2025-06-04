@@ -1,4 +1,3 @@
-
 import { Dispatcher, DispatchMetadata, Signer, Store } from "waku-dispatcher";
 import {
   createLightNode,
@@ -21,6 +20,8 @@ export interface WakuMessage {
   text: string;
   timestamp: number;
   author: string;
+  walletAddress?: string;
+  signature?: string;
 }
 
 const bootstrapNodes: string[] = [
