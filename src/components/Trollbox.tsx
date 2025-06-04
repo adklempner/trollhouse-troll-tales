@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,7 +30,6 @@ const Trollbox = () => {
   ]);
   const [newMessage, setNewMessage] = useState('');
   const [username, setUsername] = useState('');
-  const [isUsernameSet, setIsUsernameSet] = useState(false);
   const [wakuStatus, setWakuStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [isSigning, setIsSigning] = useState(false);
@@ -89,14 +87,6 @@ const Trollbox = () => {
       );
       console.log('Wallet display name:', displayName);
       setUsername(displayName);
-      setIsUsernameSet(true);
-    }
-  };
-
-  const handleUsernameSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (username.trim()) {
-      setIsUsernameSet(true);
     }
   };
 
@@ -104,16 +94,16 @@ const Trollbox = () => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    if (!isUsernameSet) {
+    if (!username.trim()) {
       toast({
         title: "Username Required",
-        description: "Please set a username or connect your wallet to send messages",
+        description: "Please set a username to send messages",
         variant: "destructive",
       });
       return;
     }
 
-    const effectiveUsername = username.trim() || 'Anonymous Troll';
+    const effectiveUsername = username.trim();
     const messageId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
     const timestamp = new Date();
     
@@ -256,40 +246,28 @@ const Trollbox = () => {
           <div className="p-3 border-t bg-white rounded-b-lg space-y-2">
             <WalletConnection onWalletChange={handleWalletChange} />
             
-            {!isUsernameSet && (
-              <form onSubmit={handleUsernameSubmit}>
-                <div className="flex space-x-2">
-                  <Input
-                    placeholder="Your troll name"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="text-sm flex-1"
-                    required
-                  />
-                  <Button 
-                    type="submit" 
-                    size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    Set
-                  </Button>
-                </div>
-              </form>
-            )}
+            <div className="flex space-x-2">
+              <Input
+                placeholder="Your troll name"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="text-sm flex-1"
+              />
+            </div>
             
             <form onSubmit={handleSendMessage} className="flex space-x-2">
               <Input
-                placeholder={isUsernameSet ? "Type your message..." : "Set a username first..."}
+                placeholder={username.trim() ? "Type your message..." : "Set a username first..."}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="flex-1 text-sm"
-                disabled={!isUsernameSet}
+                disabled={!username.trim()}
               />
               <Button 
                 type="submit" 
                 size="icon" 
                 className="bg-emerald-600 hover:bg-emerald-700"
-                disabled={wakuStatus !== 'connected' || !isUsernameSet || isSigning}
+                disabled={wakuStatus !== 'connected' || !username.trim() || isSigning}
               >
                 <Send className="w-4 h-4" />
               </Button>
