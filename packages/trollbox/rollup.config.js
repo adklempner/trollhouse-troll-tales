@@ -24,10 +24,30 @@ export default {
       browser: true,
       preferBuiltins: false,
     }),
-    commonjs(),
+    commonjs({
+      include: ['node_modules/**'],
+    }),
     typescript({
       tsconfig: './tsconfig.json',
+      declaration: true,
+      declarationDir: 'dist',
     }),
   ],
-  external: ['react', 'react-dom'],
+  external: [
+    'react', 
+    'react-dom',
+    // Mark problematic dependencies as external to avoid bundling issues
+    '@waku/interfaces',
+    '@waku/sdk',
+    'waku-dispatcher',
+    'ethers',
+    'crypto-js'
+  ],
+  onwarn(warning, warn) {
+    // Suppress circular dependency warnings from dependencies
+    if (warning.code === 'CIRCULAR_DEPENDENCY') {
+      return;
+    }
+    warn(warning);
+  },
 };
