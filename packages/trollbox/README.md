@@ -1,5 +1,5 @@
 
-# @your-org/trollbox
+# waku-trollbox
 
 A decentralized chat component built with React, Web3 wallet integration, and Waku messaging protocol.
 
@@ -16,13 +16,13 @@ A decentralized chat component built with React, Web3 wallet integration, and Wa
 ## Installation
 
 ```bash
-npm install @your-org/trollbox
+npm install waku-trollbox
 ```
 
 ## Usage
 
 ```tsx
-import { Trollbox } from '@your-org/trollbox';
+import { Trollbox } from 'waku-trollbox';
 
 function App() {
   return (
@@ -54,7 +54,7 @@ The trollbox automatically generates a unique content topic based on your domain
 The package exports several services that can be used independently:
 
 ```tsx
-import { walletService, wakuService, ensService } from '@your-org/trollbox';
+import { walletService, wakuService, ensService } from 'waku-trollbox';
 
 // Connect wallet
 const wallet = await walletService.connectWallet();
