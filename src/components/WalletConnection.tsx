@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Wallet, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { walletService, WalletInfo } from '@/services/walletService';
+import { ensService } from '@/services/ensService';
 import { useToast } from '@/hooks/use-toast';
 
 interface WalletConnectionProps {
@@ -11,6 +12,7 @@ interface WalletConnectionProps {
 
 const WalletConnection: React.FC<WalletConnectionProps> = ({ onWalletChange }) => {
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
+  const [displayName, setDisplayName] = useState<string>('');
   const [isConnecting, setIsConnecting] = useState(false);
   const { toast } = useToast();
 
@@ -19,6 +21,9 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ onWalletChange }) =
     if (currentWallet) {
       setWallet(currentWallet);
       onWalletChange(currentWallet);
+      // Resolve ENS for current wallet
+      ensService.getDisplayName(currentWallet.address, walletService.formatAddress)
+        .then(name => setDisplayName(name));
     }
   }, [onWalletChange]);
 
@@ -28,9 +33,17 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ onWalletChange }) =
       const connectedWallet = await walletService.connectWallet();
       setWallet(connectedWallet);
       onWalletChange(connectedWallet);
+      
+      // Resolve ENS name for display
+      const name = await ensService.getDisplayName(
+        connectedWallet.address, 
+        walletService.formatAddress
+      );
+      setDisplayName(name);
+      
       toast({
         title: "Wallet Connected",
-        description: `Connected to ${walletService.formatAddress(connectedWallet.address)}`,
+        description: `Connected to ${name}`,
       });
     } catch (error) {
       console.error('Failed to connect wallet:', error);
@@ -47,6 +60,7 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ onWalletChange }) =
   const handleDisconnect = () => {
     walletService.disconnect();
     setWallet(null);
+    setDisplayName('');
     onWalletChange(null);
     toast({
       title: "Wallet Disconnected",
@@ -59,7 +73,7 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ onWalletChange }) =
       <div className="flex items-center space-x-2 p-2 bg-emerald-50 rounded border">
         <Wallet className="w-4 h-4 text-emerald-600" />
         <span className="text-sm text-emerald-700 font-medium">
-          {walletService.formatAddress(wallet.address)}
+          {displayName || walletService.formatAddress(wallet.address)}
         </span>
         <Button
           onClick={handleDisconnect}
