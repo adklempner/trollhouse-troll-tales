@@ -24,6 +24,7 @@ const Trollbox = () => {
   ]);
   const [newMessage, setNewMessage] = useState('');
   const [username, setUsername] = useState('');
+  const [isUsernameSet, setIsUsernameSet] = useState(false);
   const [wakuStatus, setWakuStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
   useEffect(() => {
@@ -56,6 +57,13 @@ const Trollbox = () => {
 
     //return cleanup;
   }, []);
+
+  const handleUsernameSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (username.trim()) {
+      setIsUsernameSet(true);
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,15 +161,24 @@ const Trollbox = () => {
 
           {/* Input Area */}
           <div className="p-3 border-t bg-white rounded-b-lg">
-            {!username && (
-              <div className="mb-2">
-                <Input
-                  placeholder="Your troll name (optional)"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="text-sm"
-                />
-              </div>
+            {!isUsernameSet && (
+              <form onSubmit={handleUsernameSubmit} className="mb-2">
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="Your troll name (optional)"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="text-sm flex-1"
+                  />
+                  <Button 
+                    type="submit" 
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                  >
+                    Set
+                  </Button>
+                </div>
+              </form>
             )}
             <form onSubmit={handleSendMessage} className="flex space-x-2">
               <Input
