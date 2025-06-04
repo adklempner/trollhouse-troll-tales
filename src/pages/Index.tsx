@@ -4,6 +4,7 @@ import AboutTrolls from "@/components/AboutTrolls";
 import PrivacyWisdom from "@/components/PrivacyWisdom";
 import CommunityValues from "@/components/CommunityValues";
 import Footer from "@/components/Footer";
+import Trollbox from "@/components/Trollbox";
 
 const Index = () => {
   return (
@@ -13,6 +14,7 @@ const Index = () => {
       <PrivacyWisdom />
       <CommunityValues />
       <Footer />
+      <Trollbox />
     </div>
   );
 };

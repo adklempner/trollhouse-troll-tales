@@ -1,0 +1,128 @@
+
+import React, { useState } from 'react';
+import { MessageCircle, X, Send } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
+interface Message {
+  id: string;
+  text: string;
+  timestamp: Date;
+  author: string;
+}
+
+const Trollbox = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      text: '🧌 Welcome to the troll chat! Share your privacy tips!',
+      timestamp: new Date(Date.now() - 1000 * 60 * 5),
+      author: 'Bridge Troll'
+    }
+  ]);
+  const [newMessage, setNewMessage] = useState('');
+  const [username, setUsername] = useState('');
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
+
+    const displayName = username.trim() || 'Anonymous Troll';
+    const message: Message = {
+      id: Date.now().toString(),
+      text: newMessage,
+      timestamp: new Date(),
+      author: displayName
+    };
+
+    setMessages(prev => [...prev, message]);
+    setNewMessage('');
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50">
+      {/* Chat Toggle Button */}
+      {!isOpen && (
+        <Button
+          onClick={() => setIsOpen(true)}
+          className="rounded-full w-12 h-12 bg-emerald-600 hover:bg-emerald-700 shadow-lg"
+          size="icon"
+        >
+          <MessageCircle className="w-6 h-6" />
+        </Button>
+      )}
+
+      {/* Chat Window */}
+      {isOpen && (
+        <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-80 h-96 flex flex-col">
+          {/* Header */}
+          <div className="bg-emerald-600 text-white p-3 rounded-t-lg flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-lg">🧌</span>
+              <span className="font-medium">Trollbox</span>
+            </div>
+            <Button
+              onClick={() => setIsOpen(false)}
+              variant="ghost"
+              size="icon"
+              className="text-white hover:bg-emerald-700 h-8 w-8"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Messages Area */}
+          <div className="flex-1 p-3 overflow-y-auto space-y-2 bg-gray-50">
+            {messages.map((message) => (
+              <div key={message.id} className="text-sm">
+                <div className="flex items-center space-x-1 text-xs text-gray-500 mb-1">
+                  <span className="font-medium text-emerald-600">{message.author}</span>
+                  <span>•</span>
+                  <span>{formatTime(message.timestamp)}</span>
+                </div>
+                <div className="bg-white rounded p-2 border">
+                  {message.text}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Input Area */}
+          <div className="p-3 border-t bg-white rounded-b-lg">
+            {!username && (
+              <div className="mb-2">
+                <Input
+                  placeholder="Your troll name (optional)"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="text-sm"
+                />
+              </div>
+            )}
+            <form onSubmit={handleSendMessage} className="flex space-x-2">
+              <Input
+                placeholder="Type your message..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                className="flex-1 text-sm"
+              />
+              <Button type="submit" size="icon" className="bg-emerald-600 hover:bg-emerald-700">
+                <Send className="w-4 h-4" />
+              </Button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Trollbox;
