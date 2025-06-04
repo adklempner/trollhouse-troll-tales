@@ -14,6 +14,7 @@ import {
   IWaku,
   Protocols
 } from "@waku/interfaces"
+import CryptoJS from 'crypto-js';
 
 export interface WakuMessage {
   id: string;
@@ -21,7 +22,6 @@ export interface WakuMessage {
   timestamp: number;
   author: string;
 }
-
 
 const bootstrapNodes: string[] = [
   "/dns4/waku-test.bloxy.one/tcp/8095/wss/p2p/16Uiu2HAmSZbDB7CusdRhgkD81VssRjQV5ZH13FbzCGcdnbbh6VwZ",
@@ -33,6 +33,14 @@ const networkConfig = { clusterId: 42, shards: [0] }
 
 let wakuDispatcherPromise: Promise<Dispatcher>
 let initializing = false
+
+// Generate content topic based on current domain
+const generateContentTopic = (): string => {
+  const domain = window.location.hostname;
+  const hash = CryptoJS.SHA256(domain).toString();
+  return `/trollbox/1/${hash}/json`;
+};
+
 class WakuService {
   private dispatcher: Dispatcher | null = null;
   private messageHandlers: ((message: WakuMessage) => void)[] = [];
@@ -54,7 +62,8 @@ class WakuService {
         
         await node.start();
 
-        const contentTopic = "/trollbox/1/chat/json"
+        const contentTopic = generateContentTopic();
+        console.log("Generated content topic:", contentTopic);
 
         // Wait for connection to at least one peer
         await node.waitForPeers([Protocols.Store, Protocols.Filter, Protocols.LightPush]);
@@ -88,8 +97,6 @@ class WakuService {
 
     return wakuDispatcherPromise;
   };
-
-
 
   onMessage(handler: (message: WakuMessage) => void) {
     this.messageHandlers.push(handler);
