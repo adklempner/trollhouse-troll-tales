@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, Grip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ const Trollbox = () => {
   const [isSigning, setIsSigning] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 320, height: 384 });
   const [isResizing, setIsResizing] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const chatRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -82,9 +84,11 @@ const Trollbox = () => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing || !chatRef.current) return;
       
-      const rect = chatRef.current.getBoundingClientRect();
-      const newWidth = Math.max(280, e.clientX - rect.left + 10);
-      const newHeight = Math.max(200, e.clientY - rect.top + 10);
+      const deltaX = e.clientX - dragStart.x;
+      const deltaY = e.clientY - dragStart.y;
+      
+      const newWidth = Math.max(280, dragStart.width - deltaX);
+      const newHeight = Math.max(200, dragStart.height - deltaY);
       
       setDimensions({ width: newWidth, height: newHeight });
     };
@@ -106,10 +110,16 @@ const Trollbox = () => {
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
-  }, [isResizing]);
+  }, [isResizing, dragStart]);
 
   const handleResizeStart = (e: React.MouseEvent) => {
     e.preventDefault();
+    setDragStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: dimensions.width,
+      height: dimensions.height
+    });
     setIsResizing(true);
   };
 
@@ -242,6 +252,14 @@ const Trollbox = () => {
             minHeight: '200px'
           }}
         >
+          {/* Resize Handle */}
+          <div
+            className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize flex items-center justify-center text-gray-400 hover:text-gray-600 z-10"
+            onMouseDown={handleResizeStart}
+          >
+            <Grip className="w-3 h-3" />
+          </div>
+
           {/* Header */}
           <div className="bg-emerald-600 text-white p-3 rounded-t-lg flex items-center justify-between flex-shrink-0">
             <div className="flex items-center space-x-2">
@@ -318,14 +336,6 @@ const Trollbox = () => {
                 <Send className="w-4 h-4" />
               </Button>
             </form>
-          </div>
-
-          {/* Resize Handle */}
-          <div
-            className="absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize flex items-center justify-center text-gray-400 hover:text-gray-600"
-            onMouseDown={handleResizeStart}
-          >
-            <Grip className="w-3 h-3 rotate-45" />
           </div>
         </div>
       )}
