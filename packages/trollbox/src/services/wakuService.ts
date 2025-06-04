@@ -39,23 +39,8 @@ const generateSymmetricKey = (): Uint8Array => {
   const domain = window.location.hostname;
   // Create a deterministic key from domain name using PBKDF2
   const salt = 'trollbox-encryption-salt';
-  const key = CryptoJS.PBKDF2(domain, salt, {
-    keySize: 256/32, // 32 bytes = 256 bits
-    iterations: 10000
-  });
-  
-  // Convert CryptoJS WordArray to Uint8Array
-  const keyArray = new Uint8Array(32);
-  const keyWords = key.words;
-  for (let i = 0; i < keyWords.length; i++) {
-    const word = keyWords[i];
-    keyArray[i * 4] = (word >>> 24) & 0xff;
-    keyArray[i * 4 + 1] = (word >>> 16) & 0xff;
-    keyArray[i * 4 + 2] = (word >>> 8) & 0xff;
-    keyArray[i * 4 + 3] = word & 0xff;
-  }
-  
-  return keyArray;
+  const hash = CryptoJS.SHA256(domain+salt).toString();
+  return hash
 };
 
 class WakuService {
@@ -92,6 +77,7 @@ class WakuService {
           true,
           store
         );
+        console.log()
         this.dispatcher.registerKey(symmetricKey, KeyType.Symmetric, true);
         
         this.dispatcher.on("trollbox-message", async (message: WakuMessage, _signer: Signer, _3: DispatchMetadata): Promise<void> => {
@@ -100,7 +86,6 @@ class WakuService {
         })
 
         await this.dispatcher.start()
-        await this.dispatcher.dispatchLocalQuery()
         await this.dispatcher.dispatchQuery()
         
         console.log("Initializing Waku...");
@@ -134,7 +119,7 @@ class WakuService {
     }
 
     try {
-      const result = await dispatcher.emit('trollbox-message', message, undefined, undefined, true);
+      const result = await dispatcher.emitTo(dispatcher.encoder!,'trollbox-message', message, undefined, generateSymmetricKey(), true);
       console.log('Encrypted message sent:', result)
       if (!result) throw new Error('Failed to send message via Waku');
       console.log('Message sent via Waku with encryption:', message);
