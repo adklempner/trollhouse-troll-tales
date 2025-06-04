@@ -1,5 +1,5 @@
 
-import { WakuDispatcher } from 'waku-dispatcher';
+import { Dispatcher } from 'waku-dispatcher';
 
 export interface WakuMessage {
   id: string;
@@ -9,7 +9,7 @@ export interface WakuMessage {
 }
 
 class WakuService {
-  private dispatcher: WakuDispatcher | null = null;
+  private dispatcher: Dispatcher | null = null;
   private isInitialized = false;
   private messageHandlers: ((message: WakuMessage) => void)[] = [];
 
@@ -17,7 +17,7 @@ class WakuService {
     if (this.isInitialized) return;
     
     try {
-      this.dispatcher = await WakuDispatcher.create();
+      this.dispatcher = await Dispatcher.create();
       this.isInitialized = true;
       
       // Listen for incoming messages
