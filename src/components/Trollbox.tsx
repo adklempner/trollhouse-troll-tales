@@ -28,31 +28,33 @@ const Trollbox = () => {
 
   useEffect(() => {
     // Initialize Waku service
-    wakuService.initialize().then(() => {
+    wakuService.getDispatcher().then(() => {
       setWakuStatus('connected');
+
+      wakuService.onMessage((wakuMessage: WakuMessage) => {
+        const message: Message = {
+          id: wakuMessage.id,
+          text: wakuMessage.text,
+          timestamp: new Date(wakuMessage.timestamp),
+          author: wakuMessage.author
+        };
+        
+        setMessages(prev => {
+          // Avoid duplicates
+          if (prev.some(m => m.id === message.id)) {
+            return prev;
+          }
+          return [...prev, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        });
+      });
     }).catch(() => {
       setWakuStatus('disconnected');
     });
 
     // Listen for incoming messages
-    const cleanup = wakuService.onMessage((wakuMessage: WakuMessage) => {
-      const message: Message = {
-        id: wakuMessage.id,
-        text: wakuMessage.text,
-        timestamp: new Date(wakuMessage.timestamp),
-        author: wakuMessage.author
-      };
-      
-      setMessages(prev => {
-        // Avoid duplicates
-        if (prev.some(m => m.id === message.id)) {
-          return prev;
-        }
-        return [...prev, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-      });
-    });
 
-    return cleanup;
+
+    //return cleanup;
   }, []);
 
   const handleSendMessage = async (e: React.FormEvent) => {
