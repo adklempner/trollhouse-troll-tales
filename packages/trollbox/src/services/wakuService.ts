@@ -2,15 +2,9 @@
 import { Dispatcher, DispatchMetadata, Signer, Store } from "waku-dispatcher";
 import {
   createLightNode,
-  createDecoder,
   LightNode,
-  EConnectionStateEvents,
-  createEncoder,
 } from "@waku/sdk";
 import {
-  HealthStatus,
-  HealthStatusChangeEvents,
-  IWaku,
   Protocols
 } from "@waku/interfaces"
 import CryptoJS from 'crypto-js';
@@ -68,17 +62,17 @@ class WakuService {
         const store = new Store(`podex`)
         
         this.dispatcher = new Dispatcher(
-          node,
+          node as any,
           contentTopic,
           true,
           store
         );
         
-        this.dispatcher.on("trollbox-message", async (message: WakuMessage, signer: Signer, _3: DispatchMetadata): Promise<void> => {
+        this.dispatcher.on("trollbox-message", async (message: WakuMessage, _signer: Signer, _3: DispatchMetadata): Promise<void> => {
           console.log(message)
           this.messageHandlers.forEach(handler => handler(message));
         })
-        
+
         await this.dispatcher.start()
         await this.dispatcher.dispatchLocalQuery()
         await this.dispatcher.dispatchQuery()
@@ -114,7 +108,7 @@ class WakuService {
     }
 
     try {
-      const result = await dispatcher.emitTo(dispatcher.encoder, 'trollbox-message', message, undefined, undefined, true);
+      const result = await dispatcher.emit('trollbox-message', message, undefined, undefined, true);
       console.log(result)
       if (!result) throw new Error('Failed to send message via Waku');
       console.log('Message sent via Waku:', message);
