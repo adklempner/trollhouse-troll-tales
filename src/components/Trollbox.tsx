@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { wakuService, WakuMessage } from '@/services/wakuService';
 
 interface Message {
   id: string;
@@ -23,21 +24,64 @@ const Trollbox = () => {
   ]);
   const [newMessage, setNewMessage] = useState('');
   const [username, setUsername] = useState('');
+  const [wakuStatus, setWakuStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  useEffect(() => {
+    // Initialize Waku service
+    wakuService.initialize().then(() => {
+      setWakuStatus('connected');
+    }).catch(() => {
+      setWakuStatus('disconnected');
+    });
+
+    // Listen for incoming messages
+    const cleanup = wakuService.onMessage((wakuMessage: WakuMessage) => {
+      const message: Message = {
+        id: wakuMessage.id,
+        text: wakuMessage.text,
+        timestamp: new Date(wakuMessage.timestamp),
+        author: wakuMessage.author
+      };
+      
+      setMessages(prev => {
+        // Avoid duplicates
+        if (prev.some(m => m.id === message.id)) {
+          return prev;
+        }
+        return [...prev, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      });
+    });
+
+    return cleanup;
+  }, []);
+
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
     const displayName = username.trim() || 'Anonymous Troll';
+    const messageId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
+    
     const message: Message = {
-      id: Date.now().toString(),
+      id: messageId,
       text: newMessage,
       timestamp: new Date(),
       author: displayName
     };
 
+    // Add to local state immediately for responsive UI
     setMessages(prev => [...prev, message]);
     setNewMessage('');
+
+    // Send via Waku
+    const wakuMessage: WakuMessage = {
+      id: message.id,
+      text: message.text,
+      timestamp: message.timestamp.getTime(),
+      author: message.author
+    };
+
+    await wakuService.sendMessage(wakuMessage);
   };
 
   const formatTime = (date: Date) => {
@@ -47,16 +91,25 @@ const Trollbox = () => {
     });
   };
 
+  const getStatusColor = () => {
+    switch (wakuStatus) {
+      case 'connected': return 'bg-green-500';
+      case 'connecting': return 'bg-yellow-500';
+      case 'disconnected': return 'bg-red-500';
+    }
+  };
+
   return (
     <div className="fixed bottom-4 right-4 z-50">
       {/* Chat Toggle Button */}
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="rounded-full w-12 h-12 bg-emerald-600 hover:bg-emerald-700 shadow-lg"
+          className="rounded-full w-12 h-12 bg-emerald-600 hover:bg-emerald-700 shadow-lg relative"
           size="icon"
         >
           <MessageCircle className="w-6 h-6" />
+          <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${getStatusColor()}`} />
         </Button>
       )}
 
@@ -68,6 +121,7 @@ const Trollbox = () => {
             <div className="flex items-center space-x-2">
               <span className="text-lg">🧌</span>
               <span className="font-medium">Trollbox</span>
+              <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} title={`Waku: ${wakuStatus}`} />
             </div>
             <Button
               onClick={() => setIsOpen(false)}
@@ -114,7 +168,12 @@ const Trollbox = () => {
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="flex-1 text-sm"
               />
-              <Button type="submit" size="icon" className="bg-emerald-600 hover:bg-emerald-700">
+              <Button 
+                type="submit" 
+                size="icon" 
+                className="bg-emerald-600 hover:bg-emerald-700"
+                disabled={wakuStatus !== 'connected'}
+              >
                 <Send className="w-4 h-4" />
               </Button>
             </form>
