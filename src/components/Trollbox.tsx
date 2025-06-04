@@ -24,7 +24,7 @@ const Trollbox = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '🧌 Welcome to the troll chat! Connect your wallet to start chatting!',
+      text: '🧌 Welcome to the troll chat! Set a username or connect your wallet to start chatting!',
       timestamp: new Date(Date.now() - 1000 * 60 * 5),
       author: 'Bridge Troll'
     }
@@ -90,9 +90,6 @@ const Trollbox = () => {
       console.log('Wallet display name:', displayName);
       setUsername(displayName);
       setIsUsernameSet(true);
-    } else {
-      setUsername('');
-      setIsUsernameSet(false);
     }
   };
 
@@ -107,44 +104,56 @@ const Trollbox = () => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    if (!wallet) {
+    if (!isUsernameSet) {
       toast({
-        title: "Wallet Required",
-        description: "Please connect your wallet to send messages",
+        title: "Username Required",
+        description: "Please set a username or connect your wallet to send messages",
         variant: "destructive",
       });
       return;
     }
 
-    setIsSigning(true);
+    const effectiveUsername = username.trim() || 'Anonymous Troll';
+    const messageId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
+    const timestamp = new Date();
+    
+    let signature: string | undefined;
+
+    // If wallet is connected, sign the message
+    if (wallet) {
+      setIsSigning(true);
+      try {
+        const messageToSign = `${newMessage}|${timestamp.getTime()}|${messageId}`;
+        signature = await walletService.signMessage(messageToSign);
+      } catch (error) {
+        console.error('Failed to sign message:', error);
+        toast({
+          title: "Failed to Sign",
+          description: "Could not sign message with wallet",
+          variant: "destructive",
+        });
+        setIsSigning(false);
+        return;
+      }
+      setIsSigning(false);
+    }
+
+    const message: Message = {
+      id: messageId,
+      text: newMessage,
+      timestamp,
+      author: effectiveUsername,
+      walletAddress: wallet?.address,
+      signature,
+      displayName: effectiveUsername
+    };
+
+    // Add to local state immediately for responsive UI
+    setMessages(prev => [...prev, message]);
+    setNewMessage('');
+
+    // Send via Waku
     try {
-      const displayName = username.trim() || await ensService.getDisplayName(
-        wallet.address,
-        walletService.formatAddress
-      );
-      console.log('Sending message with display name:', displayName);
-      const messageId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
-      const timestamp = new Date();
-      
-      // Create message for signing
-      const messageToSign = `${newMessage}|${timestamp.getTime()}|${messageId}`;
-      const signature = await walletService.signMessage(messageToSign);
-
-      const message: Message = {
-        id: messageId,
-        text: newMessage,
-        timestamp,
-        author: displayName,
-        walletAddress: wallet.address,
-        signature,
-        displayName
-      };
-
-      // Add to local state immediately for responsive UI
-      setMessages(prev => [...prev, message]);
-      setNewMessage('');
-
-      // Send via Waku
       const wakuMessage: WakuMessage = {
         id: message.id,
         text: message.text,
@@ -156,14 +165,12 @@ const Trollbox = () => {
 
       await wakuService.sendMessage(wakuMessage);
     } catch (error) {
-      console.error('Failed to send message:', error);
+      console.error('Failed to send message via Waku:', error);
       toast({
         title: "Failed to Send",
-        description: "Could not sign and send message",
+        description: "Could not send message to network",
         variant: "destructive",
       });
-    } finally {
-      setIsSigning(false);
     }
   };
 
@@ -249,14 +256,15 @@ const Trollbox = () => {
           <div className="p-3 border-t bg-white rounded-b-lg space-y-2">
             <WalletConnection onWalletChange={handleWalletChange} />
             
-            {!wallet && !isUsernameSet && (
+            {!isUsernameSet && (
               <form onSubmit={handleUsernameSubmit}>
                 <div className="flex space-x-2">
                   <Input
-                    placeholder="Your troll name (optional)"
+                    placeholder="Your troll name"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="text-sm flex-1"
+                    required
                   />
                   <Button 
                     type="submit" 
@@ -271,17 +279,17 @@ const Trollbox = () => {
             
             <form onSubmit={handleSendMessage} className="flex space-x-2">
               <Input
-                placeholder={wallet ? "Type your message..." : "Connect wallet to chat..."}
+                placeholder={isUsernameSet ? "Type your message..." : "Set a username first..."}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="flex-1 text-sm"
-                disabled={!wallet}
+                disabled={!isUsernameSet}
               />
               <Button 
                 type="submit" 
                 size="icon" 
                 className="bg-emerald-600 hover:bg-emerald-700"
-                disabled={wakuStatus !== 'connected' || !wallet || isSigning}
+                disabled={wakuStatus !== 'connected' || !isUsernameSet || isSigning}
               >
                 <Send className="w-4 h-4" />
               </Button>
