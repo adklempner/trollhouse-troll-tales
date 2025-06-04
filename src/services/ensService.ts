@@ -54,7 +54,7 @@ class ENSService {
 
     try {
       // Use Cloudflare's Ethereum RPC endpoint for mainnet
-      const provider = new ethers.JsonRpcProvider('https://cloudflare-eth.com');
+      const provider = new ethers.JsonRpcProvider('https://eth.llamarpc.com');
       console.log('Resolving ENS for', address);
       const ensName = await provider.lookupAddress(address);
       console.log('ENS resolved:', ensName);
