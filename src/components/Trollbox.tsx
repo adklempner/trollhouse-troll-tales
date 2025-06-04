@@ -43,6 +43,7 @@ const Trollbox = () => {
       setWakuStatus('connected');
 
       wakuService.onMessage(async (wakuMessage: WakuMessage) => {
+        console.log('Received Waku message:', wakuMessage);
         const message: Message = {
           id: wakuMessage.id,
           text: wakuMessage.text,
@@ -54,10 +55,12 @@ const Trollbox = () => {
         
         // Resolve ENS name if wallet address is available
         if (message.walletAddress) {
+          console.log('Resolving ENS for message from:', message.walletAddress);
           message.displayName = await ensService.getDisplayName(
             message.walletAddress,
             walletService.formatAddress
           );
+          console.log('ENS resolved to:', message.displayName);
         }
         
         setMessages(prev => {
@@ -78,11 +81,13 @@ const Trollbox = () => {
   const handleWalletChange = async (newWallet: WalletInfo | null) => {
     setWallet(newWallet);
     if (newWallet) {
+      console.log('Wallet connected:', newWallet.address);
       // Try to get ENS name for the connected wallet
       const displayName = await ensService.getDisplayName(
         newWallet.address,
         walletService.formatAddress
       );
+      console.log('Wallet display name:', displayName);
       setUsername(displayName);
       setIsUsernameSet(true);
     } else {
@@ -117,6 +122,7 @@ const Trollbox = () => {
         wallet.address,
         walletService.formatAddress
       );
+      console.log('Sending message with display name:', displayName);
       const messageId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
       const timestamp = new Date();
       

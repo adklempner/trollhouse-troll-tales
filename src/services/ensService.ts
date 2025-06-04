@@ -48,13 +48,16 @@ class ENSService {
   async getENSName(address: string): Promise<string | null> {
     // Check cache first
     if (this.isCacheValid(address)) {
+      console.log('ENS cache hit for', address, this.cache[address].name);
       return this.cache[address].name;
     }
 
     try {
-      // Use the default provider (mainnet)
-      const provider = new ethers.JsonRpcProvider();
+      // Use Cloudflare's Ethereum RPC endpoint for mainnet
+      const provider = new ethers.JsonRpcProvider('https://cloudflare-eth.com');
+      console.log('Resolving ENS for', address);
       const ensName = await provider.lookupAddress(address);
+      console.log('ENS resolved:', ensName);
       
       // Cache the result
       this.cache[address] = {
@@ -81,7 +84,9 @@ class ENSService {
   // Helper method to get display name (ENS or formatted address)
   async getDisplayName(address: string, fallbackFormatter: (addr: string) => string): Promise<string> {
     const ensName = await this.getENSName(address);
-    return ensName || fallbackFormatter(address);
+    const displayName = ensName || fallbackFormatter(address);
+    console.log('Display name for', address, ':', displayName);
+    return displayName;
   }
 }
 
