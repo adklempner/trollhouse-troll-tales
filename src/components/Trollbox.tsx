@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { wakuService, WakuMessage } from '@/services/wakuService';
 import { walletService, WalletInfo } from '@/services/walletService';
 import { ensService } from '@/services/ensService';
@@ -195,84 +197,92 @@ const Trollbox = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="bg-white border border-gray-200 rounded-lg shadow-xl w-80 h-96 flex flex-col">
-          {/* Header */}
-          <div className="bg-emerald-600 text-white p-3 rounded-t-lg flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="text-lg">🧌</span>
-              <span className="font-medium">Trollbox</span>
-              <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} title={`Waku: ${wakuStatus}`} />
-            </div>
-            <Button
-              onClick={() => setIsOpen(false)}
-              variant="ghost"
-              size="icon"
-              className="text-white hover:bg-emerald-700 h-8 w-8"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {/* Messages Area */}
-          <div className="flex-1 p-3 overflow-y-auto space-y-2 bg-gray-50">
-            {messages.map((message) => (
-              <div key={message.id} className="text-sm">
-                <div className="flex items-center space-x-1 text-xs text-gray-500 mb-1">
-                  <span className="font-medium text-emerald-600">
-                    {message.displayName || message.author}
-                  </span>
-                  {message.walletAddress && (
-                    <>
-                      <span>•</span>
-                      <span className="text-blue-600" title={message.walletAddress}>
-                        {walletService.formatAddress(message.walletAddress)}
-                      </span>
-                    </>
-                  )}
-                  <span>•</span>
-                  <span>{formatTime(message.timestamp)}</span>
-                  {message.signature && (
-                    <span className="text-green-600" title="Verified">✓</span>
-                  )}
-                </div>
-                <div className="bg-white rounded p-2 border">
-                  {message.text}
-                </div>
+        <div className="bg-white border border-gray-200 rounded-lg shadow-xl min-w-80 min-h-96 max-w-2xl max-h-[600px] flex flex-col resize overflow-hidden">
+          <ResizablePanelGroup direction="vertical" className="flex-1">
+            {/* Header */}
+            <div className="bg-emerald-600 text-white p-3 rounded-t-lg flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="text-lg">🧌</span>
+                <span className="font-medium">Trollbox</span>
+                <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} title={`Waku: ${wakuStatus}`} />
               </div>
-            ))}
-          </div>
-
-          {/* Input Area */}
-          <div className="p-3 border-t bg-white rounded-b-lg space-y-2">
-            <WalletConnection onWalletChange={handleWalletChange} />
-            
-            <div className="flex space-x-2">
-              <Input
-                placeholder="Your troll name"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="text-sm flex-1"
-              />
-            </div>
-            
-            <form onSubmit={handleSendMessage} className="flex space-x-2">
-              <Input
-                placeholder={username.trim() ? "Type your message..." : "Set a username first..."}
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                className="flex-1 text-sm"
-                disabled={!username.trim()}
-              />
-              <Button 
-                type="submit" 
-                size="icon" 
-                className="bg-emerald-600 hover:bg-emerald-700"
-                disabled={wakuStatus !== 'connected' || !username.trim() || isSigning}
+              <Button
+                onClick={() => setIsOpen(false)}
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-emerald-700 h-8 w-8"
               >
-                <Send className="w-4 h-4" />
+                <X className="w-4 h-4" />
               </Button>
-            </form>
-          </div>
+            </div>
+
+            {/* Messages Area */}
+            <ResizablePanel defaultSize={70} minSize={30}>
+              <div className="h-full p-3 overflow-y-auto space-y-2 bg-gray-50">
+                {messages.map((message) => (
+                  <div key={message.id} className="text-sm">
+                    <div className="flex items-center space-x-1 text-xs text-gray-500 mb-1">
+                      <span className="font-medium text-emerald-600">
+                        {message.displayName || message.author}
+                      </span>
+                      {message.walletAddress && (
+                        <>
+                          <span>•</span>
+                          <span className="text-blue-600" title={message.walletAddress}>
+                            {walletService.formatAddress(message.walletAddress)}
+                          </span>
+                        </>
+                      )}
+                      <span>•</span>
+                      <span>{formatTime(message.timestamp)}</span>
+                      {message.signature && (
+                        <span className="text-green-600" title="Verified">✓</span>
+                      )}
+                    </div>
+                    <div className="bg-white rounded p-2 border">
+                      {message.text}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ResizablePanel>
+
+            <ResizableHandle withHandle />
+
+            {/* Input Area */}
+            <ResizablePanel defaultSize={30} minSize={20}>
+              <div className="p-3 border-t bg-white rounded-b-lg space-y-2 h-full flex flex-col justify-end">
+                <WalletConnection onWalletChange={handleWalletChange} />
+                
+                <div className="flex space-x-2">
+                  <Input
+                    placeholder="Your troll name"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="text-sm flex-1"
+                  />
+                </div>
+                
+                <form onSubmit={handleSendMessage} className="flex space-x-2">
+                  <Input
+                    placeholder={username.trim() ? "Type your message..." : "Set a username first..."}
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    className="flex-1 text-sm"
+                    disabled={!username.trim()}
+                  />
+                  <Button 
+                    type="submit" 
+                    size="icon" 
+                    className="bg-emerald-600 hover:bg-emerald-700"
+                    disabled={wakuStatus !== 'connected' || !username.trim() || isSigning}
+                  >
+                    <Send className="w-4 h-4" />
+                  </Button>
+                </form>
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </div>
       )}
     </div>
