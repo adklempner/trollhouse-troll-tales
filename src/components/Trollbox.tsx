@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, GripLines } from 'lucide-react';
+import { MessageCircle, X, Send, Grip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { wakuService, WakuMessage } from '@/services/wakuService';
@@ -325,7 +325,7 @@ const Trollbox = () => {
             className="absolute bottom-0 right-0 w-4 h-4 cursor-nw-resize flex items-center justify-center text-gray-400 hover:text-gray-600"
             onMouseDown={handleResizeStart}
           >
-            <GripLines className="w-3 h-3 rotate-45" />
+            <Grip className="w-3 h-3 rotate-45" />
           </div>
         </div>
       )}
