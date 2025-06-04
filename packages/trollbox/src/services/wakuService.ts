@@ -41,7 +41,7 @@ const generateSymmetricKey = (): Uint8Array => {
   // Create a deterministic key from domain name using PBKDF2
   const salt = 'trollbox-encryption-salt';
   const hash = CryptoJS.SHA256(domain+salt).toString();
-  return utf8ToBytes(hash)
+  return utf8ToBytes(hash).slice(0, 32)
 };
 
 class WakuService {
