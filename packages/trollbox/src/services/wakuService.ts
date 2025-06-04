@@ -35,6 +35,29 @@ const generateContentTopic = (): string => {
   return `/trollbox/1/${hash}/json`;
 };
 
+const generateSymmetricKey = (): Uint8Array => {
+  const domain = window.location.hostname;
+  // Create a deterministic key from domain name using PBKDF2
+  const salt = 'trollbox-encryption-salt';
+  const key = CryptoJS.PBKDF2(domain, salt, {
+    keySize: 256/32, // 32 bytes = 256 bits
+    iterations: 10000
+  });
+  
+  // Convert CryptoJS WordArray to Uint8Array
+  const keyArray = new Uint8Array(32);
+  const keyWords = key.words;
+  for (let i = 0; i < keyWords.length; i++) {
+    const word = keyWords[i];
+    keyArray[i * 4] = (word >>> 24) & 0xff;
+    keyArray[i * 4 + 1] = (word >>> 16) & 0xff;
+    keyArray[i * 4 + 2] = (word >>> 8) & 0xff;
+    keyArray[i * 4 + 3] = word & 0xff;
+  }
+  
+  return keyArray;
+};
+
 class WakuService {
   private dispatcher: Dispatcher | null = null;
   private messageHandlers: ((message: WakuMessage) => void)[] = [];
@@ -56,7 +79,9 @@ class WakuService {
         await node.start();
 
         const contentTopic = generateContentTopic();
+        const symmetricKey = generateSymmetricKey();
         console.log("Generated content topic:", contentTopic);
+        console.log("Generated symmetric key for encryption");
 
         await node.waitForPeers([Protocols.Store, Protocols.Filter, Protocols.LightPush]);
         const store = new Store(`podex`)
@@ -65,11 +90,12 @@ class WakuService {
           node as any,
           contentTopic,
           true,
-          store
+          store,
+          symmetricKey
         );
         
         this.dispatcher.on("trollbox-message", async (message: WakuMessage, _signer: Signer, _3: DispatchMetadata): Promise<void> => {
-          console.log(message)
+          console.log('Received encrypted message:', message)
           this.messageHandlers.forEach(handler => handler(message));
         })
 
@@ -78,7 +104,7 @@ class WakuService {
         await this.dispatcher.dispatchQuery()
         
         console.log("Initializing Waku...");
-        console.log("Waku initialized successfully");
+        console.log("Waku initialized successfully with encryption");
         resolve(this.dispatcher);
       } catch (error) {
         console.error("Failed to initialize Waku:", error);
@@ -109,9 +135,9 @@ class WakuService {
 
     try {
       const result = await dispatcher.emit('trollbox-message', message, undefined, undefined, true);
-      console.log(result)
+      console.log('Encrypted message sent:', result)
       if (!result) throw new Error('Failed to send message via Waku');
-      console.log('Message sent via Waku:', message);
+      console.log('Message sent via Waku with encryption:', message);
     } catch (error) {
       console.error('Failed to send message via Waku:', error);
     }
