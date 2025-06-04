@@ -1,5 +1,5 @@
 
-import { Dispatcher, DispatchMetadata, Signer, Store } from "waku-dispatcher";
+import { Dispatcher, DispatchMetadata, KeyType, Signer, Store } from "waku-dispatcher";
 import {
   createLightNode,
   LightNode,
@@ -90,9 +90,9 @@ class WakuService {
           node as any,
           contentTopic,
           true,
-          store,
-          symmetricKey
+          store
         );
+        this.dispatcher.registerKey(symmetricKey, KeyType.Symmetric, true);
         
         this.dispatcher.on("trollbox-message", async (message: WakuMessage, _signer: Signer, _3: DispatchMetadata): Promise<void> => {
           console.log('Received encrypted message:', message)
