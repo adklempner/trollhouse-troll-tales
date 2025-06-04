@@ -1,0 +1,56 @@
+
+{
+  "name": "@your-org/trollbox",
+  "version": "1.0.0",
+  "description": "A decentralized chat component with Web3 wallet integration and Waku messaging",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "react",
+    "web3",
+    "waku",
+    "chat",
+    "trollbox",
+    "decentralized",
+    "ethereum"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
+  },
+  "dependencies": {
+    "@radix-ui/react-toast": "^1.2.1",
+    "@waku/interfaces": "^0.0.27",
+    "@waku/sdk": "^0.0.29",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "crypto-js": "^4.2.0",
+    "ethers": "^6.14.3",
+    "lucide-react": "^0.462.0",
+    "tailwind-merge": "^2.5.2",
+    "waku-dispatcher": "^0.0.24"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-typescript": "^11.0.0",
+    "@types/crypto-js": "^4.2.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "rollup": "^3.0.0",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "typescript": "^5.0.0"
+  }
+}
