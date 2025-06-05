@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "workspaces": ["packages/*"],
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-accordion": "^1.2.0",
@@ -62,6 +63,7 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.3",
     "waku-dispatcher": "^0.0.24",
+    "waku-trollbox": "workspace:*",
     "zod": "^3.23.8"
   },
   "devDependencies": {

@@ -67,7 +67,7 @@ const Trollbox = () => {
         return [...prev, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
       });
     });
-    
+
     wakuService.getDispatcher().then(() => {
       setWakuStatus('connected');
     }).catch(() => {
