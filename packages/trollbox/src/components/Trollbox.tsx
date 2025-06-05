@@ -31,7 +31,25 @@ const Trollbox: React.FC<TrollboxProps> = ({
   encryptionKey,
   ephemeral = true
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  // Get stored values from localStorage or use defaults
+  const getStoredIsOpen = () => {
+    try {
+      const stored = localStorage.getItem('trollbox-isOpen');
+      return stored ? JSON.parse(stored) : false;
+    } catch {
+      return false;
+    }
+  };
+
+  const getStoredUsername = () => {
+    try {
+      return localStorage.getItem('trollbox-username') || '';
+    } catch {
+      return '';
+    }
+  };
+
+  const [isOpen, setIsOpen] = useState(getStoredIsOpen);
   const [isMaximized, setIsMaximized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -42,7 +60,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
     }
   ]);
   const [newMessage, setNewMessage] = useState('');
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState(getStoredUsername);
   const [wakuStatus, setWakuStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [isSigning, setIsSigning] = useState(false);
@@ -55,6 +73,26 @@ const Trollbox: React.FC<TrollboxProps> = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const { toast } = useToast();
+
+  // Store isOpen state in localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('trollbox-isOpen', JSON.stringify(isOpen));
+    } catch (error) {
+      console.warn('Failed to save trollbox state to localStorage:', error);
+    }
+  }, [isOpen]);
+
+  // Store username in localStorage whenever it changes (but not when set from wallet)
+  useEffect(() => {
+    if (username && !wallet) {
+      try {
+        localStorage.setItem('trollbox-username', username);
+      } catch (error) {
+        console.warn('Failed to save username to localStorage:', error);
+      }
+    }
+  }, [username, wallet]);
 
   // Auto-scroll to bottom function
   const scrollToBottom = () => {
@@ -231,6 +269,9 @@ const Trollbox: React.FC<TrollboxProps> = ({
       );
       console.log('Wallet display name:', displayName);
       setUsername(displayName);
+    } else {
+      // When wallet disconnects, restore stored username
+      setUsername(getStoredUsername());
     }
   };
 
