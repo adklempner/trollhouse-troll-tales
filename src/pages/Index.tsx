@@ -15,7 +15,7 @@ const Index = () => {
       <PrivacyWisdom />
       <CommunityValues />
       <Footer />
-      <Trollbox />
+      <Trollbox ephemeral={false} />
     </div>
     </>
   );

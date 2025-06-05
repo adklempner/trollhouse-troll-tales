@@ -82,16 +82,17 @@ class WakuService {
           !ephemeral,
           store
         );
-        console.log()
+        
         this.dispatcher.registerKey(symmetricKey, KeyType.Symmetric, true);
         
         this.dispatcher.on("trollbox-message", async (message: WakuMessage, _signer: Signer, _3: DispatchMetadata): Promise<void> => {
           console.log('Received encrypted message:', message)
           this.messageHandlers.forEach(handler => handler(message));
-        })
+        }, false, true, undefined, false);
 
         await this.dispatcher.start()
         if (!ephemeral) {
+          console.log("Dispatching a query:)")
           await this.dispatcher.dispatchQuery()
         }
         

@@ -27,7 +27,7 @@ interface TrollboxProps {
 const Trollbox: React.FC<TrollboxProps> = ({ 
   appId,
   encryptionKey,
-  ephemeral = false
+  ephemeral = true
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
