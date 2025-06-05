@@ -13,6 +13,7 @@ A decentralized chat component built with React, Web3 wallet integration, and Wa
 - 📱 Responsive design with resizable chat window
 - 🔒 Privacy-focused with no central server dependency
 - 🔐 End-to-end encryption using domain-derived symmetric keys
+- ⚙️ Configurable content topics and encryption keys
 
 ## Installation
 
@@ -43,11 +44,64 @@ function App() {
 }
 ```
 
-The `Trollbox` component includes all necessary providers and styling.
+### Advanced Usage with Configuration
 
-### Advanced Usage
+```tsx
+import { Trollbox } from 'waku-trollbox';
 
-If you need more control over the toast notifications or want to use your own providers:
+function App() {
+  return (
+    <div className="App">
+      <Trollbox 
+        appId="my-custom-app"
+        encryptionKey="my-secret-key-32-chars-long"
+        ephemeral={true}
+      />
+    </div>
+  );
+}
+```
+
+## Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `appId` | `string` | `window.location.hostname` | Custom identifier for generating content topic. Allows apps to have isolated chat rooms. |
+| `encryptionKey` | `string` | Domain-derived key | Custom 32-character encryption key. If not provided, a key is derived from the domain. |
+| `ephemeral` | `boolean` | `false` | Whether messages should be ephemeral (not stored) on the Waku network. When `true`, only live messages are shown. |
+
+### Using Custom Props
+
+#### App ID
+Use `appId` to create isolated chat rooms for different applications:
+
+```tsx
+<Trollbox appId="my-game-lobby" />
+```
+
+Different `appId` values will create completely separate chat channels.
+
+#### Encryption Key
+Provide a custom encryption key for enhanced security:
+
+```tsx
+<Trollbox encryptionKey="your-32-character-secret-key-here" />
+```
+
+**Note**: The encryption key should be exactly 32 characters. If shorter, it will be padded; if longer, it will be truncated.
+
+#### Ephemeral Messages
+Enable ephemeral mode to only show live messages without storing them:
+
+```tsx
+<Trollbox ephemeral={true} />
+```
+
+This is useful for temporary chat sessions or privacy-focused applications.
+
+### Advanced Usage with Provider Control
+
+If you need more control over the toast notifications:
 
 ```tsx
 import { TrollboxCore, TrollboxProvider } from 'waku-trollbox';
@@ -56,7 +110,10 @@ function App() {
   return (
     <div className="App">
       <TrollboxProvider>
-        <TrollboxCore />
+        <TrollboxCore 
+          appId="my-app"
+          ephemeral={true}
+        />
         {/* Your other components */}
       </TrollboxProvider>
     </div>
@@ -64,29 +121,27 @@ function App() {
 }
 ```
 
-### Manual CSS Import (Optional)
-
-If the automatic CSS loading doesn't work in your setup, you can manually import the styles:
-
-```tsx
-import 'waku-trollbox/dist/trollbox.css';
-import { Trollbox } from 'waku-trollbox';
-```
-
 ## Configuration
 
-The trollbox automatically generates:
+### Default Behavior
+Without any props, the trollbox automatically generates:
 - A unique content topic based on your domain for isolated chat rooms
 - A symmetric encryption key derived from your domain for secure messaging
+- Persistent message storage on the Waku network
 
-## Styling
+### Custom Configuration
+With props, you can:
+- Create isolated chat rooms using custom `appId`
+- Use shared encryption keys across different domains
+- Enable ephemeral messaging for privacy
 
-The component comes with built-in styling that works out of the box. The main color scheme uses:
-- Emerald green for primary actions
-- Clean gray and white design
-- Responsive design that works on all screen sizes
+## Security Features
 
-If you want to customize the appearance, you can override the CSS classes or wrap the component in a container with custom styles.
+- **Message Encryption**: All messages are encrypted using symmetric keys
+- **Message Signing**: Wallet-connected users can sign messages for verification
+- **ENS Integration**: Automatic resolution of Ethereum Name Service addresses
+- **Isolated Channels**: Each app/domain gets its own isolated chat channel
+- **Configurable Privacy**: Choose between persistent and ephemeral messaging
 
 ## API
 
@@ -118,13 +173,6 @@ await wakuService.sendMessage({
 const displayName = await ensService.getDisplayName(address, fallbackFormatter);
 ```
 
-## Security Features
-
-- **Message Encryption**: All messages are encrypted using symmetric keys derived from your domain
-- **Message Signing**: Wallet-connected users can sign messages for verification
-- **ENS Integration**: Automatic resolution of Ethereum Name Service addresses
-- **Isolated Channels**: Each domain gets its own isolated chat channel
-
 ## Troubleshooting
 
 ### Styling Issues
@@ -140,6 +188,17 @@ If messages aren't sending:
 1. Check browser console for Waku connection errors
 2. Ensure you have a stable internet connection
 3. Try refreshing the page to reconnect to Waku network
+
+### Different Chat Rooms
+
+If you want separate chat rooms for different parts of your app:
+```tsx
+// Lobby chat
+<Trollbox appId="lobby" />
+
+// Game chat  
+<Trollbox appId="game-room-123" />
+```
 
 ## License
 

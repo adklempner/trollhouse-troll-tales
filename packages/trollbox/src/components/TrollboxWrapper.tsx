@@ -3,7 +3,13 @@ import React, { useEffect } from 'react';
 import { TrollboxProvider } from './TrollboxProvider';
 import Trollbox from './Trollbox';
 
-const TrollboxWrapper: React.FC = () => {
+interface TrollboxWrapperProps {
+  appId?: string;
+  encryptionKey?: string;
+  ephemeral?: boolean;
+}
+
+const TrollboxWrapper: React.FC<TrollboxWrapperProps> = (props) => {
   useEffect(() => {
     // Dynamically import the CSS if it hasn't been loaded
     if (!document.querySelector('link[href*="waku-trollbox"]')) {
@@ -16,7 +22,7 @@ const TrollboxWrapper: React.FC = () => {
 
   return (
     <TrollboxProvider>
-      <Trollbox />
+      <Trollbox {...props} />
     </TrollboxProvider>
   );
 };

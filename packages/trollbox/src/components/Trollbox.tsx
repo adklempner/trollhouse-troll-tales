@@ -18,7 +18,17 @@ interface Message {
   displayName?: string;
 }
 
-const Trollbox = () => {
+interface TrollboxProps {
+  appId?: string;
+  encryptionKey?: string;
+  ephemeral?: boolean;
+}
+
+const Trollbox: React.FC<TrollboxProps> = ({ 
+  appId,
+  encryptionKey,
+  ephemeral = false
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -68,12 +78,12 @@ const Trollbox = () => {
       });
     });
 
-    wakuService.getDispatcher().then(() => {
+    wakuService.getDispatcher(appId, encryptionKey, ephemeral).then(() => {
       setWakuStatus('connected');
     }).catch(() => {
       setWakuStatus('disconnected');
     });
-  }, []);
+  }, [appId, encryptionKey, ephemeral]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {

@@ -30,13 +30,17 @@ const networkConfig = { clusterId: 42, shards: [0] }
 let wakuDispatcherPromise: Promise<Dispatcher>
 let initializing = false
 
-const generateContentTopic = (): string => {
-  const domain = window.location.hostname;
-  const hash = CryptoJS.SHA256(domain).toString();
+const generateContentTopic = (appId?: string): string => {
+  const source = appId || window.location.hostname;
+  const hash = CryptoJS.SHA256(source).toString();
   return `/trollbox/1/${hash}/json`;
 };
 
-const generateSymmetricKey = (): Uint8Array => {
+const generateSymmetricKey = (encryptionKey?: string): Uint8Array => {
+  if (encryptionKey) {
+    return utf8ToBytes(encryptionKey.padEnd(32, '0').slice(0, 32));
+  }
+  
   const domain = window.location.hostname;
   // Create a deterministic key from domain name using PBKDF2
   const salt = 'trollbox-encryption-salt';
@@ -48,7 +52,7 @@ class WakuService {
   private dispatcher: Dispatcher | null = null;
   private messageHandlers: ((message: WakuMessage) => void)[] = [];
 
-  getDispatcher = async (): Promise<Dispatcher> => {
+  getDispatcher = async (appId?: string, encryptionKey?: string, ephemeral = false): Promise<Dispatcher> => {
     if (initializing) return wakuDispatcherPromise
     initializing = true
 
@@ -64,8 +68,8 @@ class WakuService {
         
         await node.start();
 
-        const contentTopic = generateContentTopic();
-        const symmetricKey = generateSymmetricKey();
+        const contentTopic = generateContentTopic(appId);
+        const symmetricKey = generateSymmetricKey(encryptionKey);
         console.log("Generated content topic:", contentTopic);
         console.log("Generated symmetric key for encryption");
 
@@ -75,7 +79,7 @@ class WakuService {
         this.dispatcher = new Dispatcher(
           node as any,
           contentTopic,
-          true,
+          !ephemeral,
           store
         );
         console.log()
@@ -87,10 +91,12 @@ class WakuService {
         })
 
         await this.dispatcher.start()
-        await this.dispatcher.dispatchQuery()
+        if (!ephemeral) {
+          await this.dispatcher.dispatchQuery()
+        }
         
         console.log("Initializing Waku...");
-        console.log("Waku initialized successfully with encryption");
+        console.log(`Waku initialized successfully with encryption (ephemeral: ${ephemeral})`);
         resolve(this.dispatcher);
       } catch (error) {
         console.error("Failed to initialize Waku:", error);
