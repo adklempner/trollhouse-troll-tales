@@ -14,3 +14,5 @@ export const TrollboxProvider: React.FC<TrollboxProviderProps> = ({ children }) 
     </>
   );
 };
+
+export default TrollboxProvider;
