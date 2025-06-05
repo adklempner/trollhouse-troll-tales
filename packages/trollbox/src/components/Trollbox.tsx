@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, Grip } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { ScrollArea } from '../ui/scroll-area';
 import { wakuService, WakuMessage } from '../services/wakuService';
 import { walletService, WalletInfo } from '../services/walletService';
 import { ensService } from '../services/ensService';
@@ -50,7 +52,45 @@ const Trollbox: React.FC<TrollboxProps> = ({
   const [lastSeenTimestamp, setLastSeenTimestamp] = useState<number>(Date.now());
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
   const { toast } = useToast();
+
+  // Auto-scroll to bottom function
+  const scrollToBottom = () => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  };
+
+  // Check if user is at bottom of scroll
+  const checkIfAtBottom = () => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+        const atBottom = scrollHeight - scrollTop - clientHeight < 10; // 10px threshold
+        setIsAtBottom(atBottom);
+      }
+    }
+  };
+
+  // Auto-scroll to bottom when trollbox opens
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(scrollToBottom, 100); // Small delay to ensure DOM is ready
+    }
+  }, [isOpen]);
+
+  // Auto-scroll when new messages arrive (only if user is at bottom)
+  useEffect(() => {
+    if (isAtBottom && messages.length > 0) {
+      setTimeout(scrollToBottom, 50);
+    }
+  }, [messages, isAtBottom]);
 
   useEffect(() => {
     wakuService.onMessage(async (wakuMessage: WakuMessage) => {
@@ -321,33 +361,39 @@ const Trollbox: React.FC<TrollboxProps> = ({
             </Button>
           </div>
 
-          <div className="flex-1 p-3 overflow-y-auto space-y-2 bg-gray-50 min-h-0">
-            {messages.map((message) => (
-              <div key={message.id} className="text-sm">
-                <div className="flex items-center space-x-1 text-xs text-gray-500 mb-1">
-                  <span className="font-medium text-emerald-600">
-                    {message.displayName || message.author}
-                  </span>
-                  {message.walletAddress && (
-                    <>
-                      <span>•</span>
-                      <span className="text-blue-600" title={message.walletAddress}>
-                        {walletService.formatAddress(message.walletAddress)}
-                      </span>
-                    </>
-                  )}
-                  <span>•</span>
-                  <span>{formatTime(message.timestamp)}</span>
-                  {message.signature && (
-                    <span className="text-green-600" title="Verified">✓</span>
-                  )}
+          <ScrollArea 
+            ref={scrollAreaRef}
+            className="flex-1 bg-gray-50"
+            onScrollCapture={checkIfAtBottom}
+          >
+            <div className="p-3 space-y-2">
+              {messages.map((message) => (
+                <div key={message.id} className="text-sm">
+                  <div className="flex items-center space-x-1 text-xs text-gray-500 mb-1">
+                    <span className="font-medium text-emerald-600">
+                      {message.displayName || message.author}
+                    </span>
+                    {message.walletAddress && (
+                      <>
+                        <span>•</span>
+                        <span className="text-blue-600" title={message.walletAddress}>
+                          {walletService.formatAddress(message.walletAddress)}
+                        </span>
+                      </>
+                    )}
+                    <span>•</span>
+                    <span>{formatTime(message.timestamp)}</span>
+                    {message.signature && (
+                      <span className="text-green-600" title="Verified">✓</span>
+                    )}
+                  </div>
+                  <div className="bg-white rounded p-2 border">
+                    {message.text}
+                  </div>
                 </div>
-                <div className="bg-white rounded p-2 border">
-                  {message.text}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </ScrollArea>
 
           <div className="p-3 border-t bg-white rounded-b-lg space-y-2 flex-shrink-0">
             <WalletConnection onWalletChange={handleWalletChange} />
