@@ -95,13 +95,20 @@ const Trollbox: React.FC<TrollboxProps> = ({
     });
   }, [appId, encryptionKey, ephemeral, lastSeenTimestamp, isOpen]);
 
-  // Mark messages as read when trollbox is opened
+  // Mark messages as read when trollbox is opened or clicked
   useEffect(() => {
     if (isOpen) {
       setLastSeenTimestamp(Date.now());
       setHasUnreadMessages(false);
     }
   }, [isOpen]);
+
+  const handleTrollboxClick = () => {
+    if (isOpen && hasUnreadMessages) {
+      setLastSeenTimestamp(Date.now());
+      setHasUnreadMessages(false);
+    }
+  };
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -282,6 +289,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
             minWidth: '280px',
             minHeight: '200px'
           }}
+          onClick={handleTrollboxClick}
         >
           <div
             className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize flex items-center justify-center text-gray-400 hover:text-gray-600 z-10"
