@@ -49,6 +49,15 @@ const Trollbox: React.FC<TrollboxProps> = ({
     }
   };
 
+  const getStoredDimensions = () => {
+    try {
+      const stored = localStorage.getItem('trollbox-dimensions');
+      return stored ? JSON.parse(stored) : { width: 320, height: 384 };
+    } catch {
+      return { width: 320, height: 384 };
+    }
+  };
+
   const [isOpen, setIsOpen] = useState(getStoredIsOpen);
   const [isMaximized, setIsMaximized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -64,7 +73,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
   const [wakuStatus, setWakuStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [isSigning, setIsSigning] = useState(false);
-  const [dimensions, setDimensions] = useState({ width: 320, height: 384 });
+  const [dimensions, setDimensions] = useState(getStoredDimensions);
   const [isResizing, setIsResizing] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
   const [lastSeenTimestamp, setLastSeenTimestamp] = useState<number>(Date.now());
@@ -93,6 +102,15 @@ const Trollbox: React.FC<TrollboxProps> = ({
       }
     }
   }, [username, wallet]);
+
+  // Store dimensions in localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('trollbox-dimensions', JSON.stringify(dimensions));
+    } catch (error) {
+      console.warn('Failed to save trollbox dimensions to localStorage:', error);
+    }
+  }, [dimensions]);
 
   // Auto-scroll to bottom function
   const scrollToBottom = () => {
