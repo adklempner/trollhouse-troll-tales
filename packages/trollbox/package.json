@@ -1,6 +1,7 @@
+
 {
   "name": "waku-trollbox",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A decentralized chat component with Web3 wallet integration and Waku messaging",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -21,7 +22,8 @@
     "chat",
     "trollbox",
     "decentralized",
-    "ethereum"
+    "ethereum",
+    "encryption"
   ],
   "author": "Your Name",
   "license": "MIT",
@@ -34,6 +36,7 @@
   },
   "dependencies": {
     "@radix-ui/react-toast": "^1.2.1",
+    "@radix-ui/react-slot": "^1.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.462.0",
