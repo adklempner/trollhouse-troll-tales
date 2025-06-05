@@ -3,6 +3,8 @@
 
 A decentralized chat component built with React, Web3 wallet integration, and Waku messaging protocol.
 
+![Trollbox demo app](image.png)
+
 ## Features
 
 - 🧌 Real-time decentralized messaging via Waku protocol
