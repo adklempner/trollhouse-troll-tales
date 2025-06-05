@@ -62,8 +62,18 @@ const Trollbox: React.FC<TrollboxProps> = ({
     }
   };
 
+  // Helper function to check if a color is a hex code
+  const isHexColor = (color: string) => {
+    return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
+  };
+
   // Helper function to get color classes based on the primary color
   const getColorClasses = (variant: 'button' | 'header' | 'header-hover' | 'button-hover' | 'unread-button' | 'unread-header') => {
+    if (isHexColor(primaryColor)) {
+      // For hex colors, we need to use inline styles
+      return '';
+    }
+
     const colorMap = {
       emerald: {
         button: 'bg-emerald-600',
@@ -104,14 +114,41 @@ const Trollbox: React.FC<TrollboxProps> = ({
         'header-hover': 'hover:bg-indigo-700',
         'unread-button': 'bg-orange-600 hover:bg-orange-700',
         'unread-header': 'bg-orange-600'
+      },
+      yellow: {
+        button: 'bg-yellow-600',
+        'button-hover': 'hover:bg-yellow-700',
+        header: 'bg-yellow-600',
+        'header-hover': 'hover:bg-yellow-700',
+        'unread-button': 'bg-orange-600 hover:bg-orange-700',
+        'unread-header': 'bg-orange-600'
       }
     };
 
     return colorMap[primaryColor as keyof typeof colorMap]?.[variant] || colorMap.emerald[variant];
   };
 
+  // Helper function to get inline styles for hex colors
+  const getColorStyles = (variant: 'button' | 'header' | 'unread') => {
+    if (!isHexColor(primaryColor)) return {};
+
+    switch (variant) {
+      case 'button':
+      case 'header':
+        return { backgroundColor: primaryColor };
+      case 'unread':
+        return { backgroundColor: '#ea580c' }; // orange-600
+      default:
+        return {};
+    }
+  };
+
   // Helper function to get accent color classes
   const getAccentColorClasses = (variant: 'message' | 'user-label') => {
+    if (isHexColor(accentColor)) {
+      return '';
+    }
+
     const accentColorMap = {
       blue: {
         message: 'bg-blue-500 text-white border-blue-500',
@@ -132,10 +169,32 @@ const Trollbox: React.FC<TrollboxProps> = ({
       indigo: {
         message: 'bg-indigo-500 text-white border-indigo-500',
         'user-label': 'text-indigo-600'
+      },
+      yellow: {
+        message: 'bg-yellow-500 text-white border-yellow-500',
+        'user-label': 'text-yellow-600'
       }
     };
 
     return accentColorMap[accentColor as keyof typeof accentColorMap]?.[variant] || accentColorMap.blue[variant];
+  };
+
+  // Helper function to get inline styles for accent hex colors
+  const getAccentColorStyles = (variant: 'message' | 'user-label') => {
+    if (!isHexColor(accentColor)) return {};
+
+    switch (variant) {
+      case 'message':
+        return { 
+          backgroundColor: accentColor, 
+          borderColor: accentColor,
+          color: 'white'
+        };
+      case 'user-label':
+        return { color: accentColor };
+      default:
+        return {};
+    }
   };
 
   const [isOpen, setIsOpen] = useState(getStoredIsOpen);
@@ -484,6 +543,9 @@ const Trollbox: React.FC<TrollboxProps> = ({
               ? getColorClasses('unread-button')
               : `${getColorClasses('button')} ${getColorClasses('button-hover')}`
           }`}
+          style={{
+            ...getColorStyles(hasUnreadMessages ? 'unread' : 'button')
+          }}
           size="icon"
         >
           <MessageCircle className="w-6 h-6" />
@@ -510,9 +572,14 @@ const Trollbox: React.FC<TrollboxProps> = ({
             </div>
           )}
 
-          <div className={`text-white p-3 rounded-t-lg flex items-center justify-between flex-shrink-0 transition-colors duration-300 ${
-            hasUnreadMessages ? getColorClasses('unread-header') : getColorClasses('header')
-          }`}>
+          <div 
+            className={`text-white p-3 rounded-t-lg flex items-center justify-between flex-shrink-0 transition-colors duration-300 ${
+              hasUnreadMessages ? getColorClasses('unread-header') : getColorClasses('header')
+            }`}
+            style={{
+              ...getColorStyles(hasUnreadMessages ? 'unread' : 'header')
+            }}
+          >
             <div className="flex items-center space-x-2">
               <span className="text-lg">🧌</span>
               <span className="font-medium">
@@ -557,7 +624,10 @@ const Trollbox: React.FC<TrollboxProps> = ({
                 return (
                   <div key={message.id} className={`text-sm ${isOwn ? 'flex flex-col items-end' : ''}`}>
                     <div className={`flex items-center space-x-1 text-xs text-gray-500 mb-1 ${isOwn ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                      <span className={`font-medium ${isOwn ? getAccentColorClasses('user-label') : 'text-gray-600'}`}>
+                      <span 
+                        className={`font-medium ${isOwn ? getAccentColorClasses('user-label') : 'text-gray-600'}`}
+                        style={isOwn ? getAccentColorStyles('user-label') : {}}
+                      >
                         {isOwn ? 'You' : (message.displayName || message.author)}
                       </span>
                       {message.walletAddress && (
@@ -574,11 +644,14 @@ const Trollbox: React.FC<TrollboxProps> = ({
                         <span className="text-green-600" title="Verified">✓</span>
                       )}
                     </div>
-                    <div className={`rounded p-2 border max-w-[80%] ${
-                      isOwn 
-                        ? getAccentColorClasses('message')
-                        : 'bg-white border-gray-200 text-gray-800'
-                    }`}>
+                    <div 
+                      className={`rounded p-2 border max-w-[80%] ${
+                        isOwn 
+                          ? getAccentColorClasses('message')
+                          : 'bg-white border-gray-200 text-gray-800'
+                      }`}
+                      style={isOwn ? getAccentColorStyles('message') : {}}
+                    >
                       {message.text}
                     </div>
                   </div>
@@ -612,6 +685,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
                 type="submit" 
                 size="icon" 
                 className={`${getColorClasses('button')} ${getColorClasses('button-hover')}`}
+                style={getColorStyles('button')}
                 disabled={wakuStatus !== 'connected' || !username.trim() || isSigning}
               >
                 <Send className="w-4 h-4" />
