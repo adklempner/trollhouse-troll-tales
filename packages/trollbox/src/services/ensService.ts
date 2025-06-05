@@ -52,7 +52,7 @@ class ENSService {
     }
 
     try {
-      const provider = new ethers.JsonRpcProvider('https://eth.llamarpc.com');
+      const provider = new ethers.JsonRpcProvider('https://gateway.tenderly.co/public/mainnet');
       console.log('Resolving ENS for', address);
       const ensName = await provider.lookupAddress(address);
       console.log('ENS resolved:', ensName);
