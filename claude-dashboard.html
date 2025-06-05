@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code Collaborative Dashboard - Trollhouse</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border: 2px solid #333;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255, 215, 0, 0.03) 10px,
+                rgba(255, 215, 0, 0.03) 20px
+            );
+            animation: scan 10s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00ff88, #00d9ff, #ff6b35);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1.2em;
+        }
+
+        .instances-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .instance {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .instance.working {
+            border-color: #00d9ff;
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .instance.completed {
+            border-color: #00ff88;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .instance.blocked {
+            border-color: #ff6b35;
+            box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+        }
+
+        .instance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .instance-id {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .instance-a { color: #00ff88; }
+        .instance-b { color: #00d9ff; }
+        .instance-c { color: #ffd700; }
+        .instance-d { color: #ff6b35; }
+
+        .status-icon {
+            font-size: 1.5em;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+
+        .task-name {
+            color: #ffd700;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            background: #2a2a2a;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00d9ff);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #000;
+            mix-blend-mode: difference;
+        }
+
+        .files {
+            font-size: 0.8em;
+            color: #888;
+            margin-bottom: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            font-size: 0.8em;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-add { color: #00ff88; }
+        .stat-remove { color: #ff6b35; }
+        .stat-time { color: #888; }
+
+        .activity-feed {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .activity-feed h2 {
+            margin-bottom: 15px;
+            color: #00d9ff;
+        }
+
+        .activity-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 5px;
+            font-size: 0.9em;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .activity-time {
+            color: #666;
+            font-size: 0.8em;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .metric-label {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        .network-diagram {
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            height: 200px;
+        }
+
+        .node {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+        }
+
+        .node:hover {
+            transform: scale(1.2);
+        }
+
+        .node-a {
+            background: #00ff88;
+            color: #000;
+            top: 20px;
+            left: 20%;
+        }
+
+        .node-b {
+            background: #00d9ff;
+            color: #000;
+            top: 20px;
+            right: 20%;
+        }
+
+        .node-c {
+            background: #ffd700;
+            color: #000;
+            bottom: 20px;
+            left: 20%;
+        }
+
+        .node-d {
+            background: #ff6b35;
+            color: #000;
+            bottom: 20px;
+            right: 20%;
+        }
+
+        .connection {
+            position: absolute;
+            height: 2px;
+            background: #444;
+            transform-origin: left center;
+        }
+
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 40px;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🧌 Trollhouse Collaborative Coding 🧌</h1>
+            <div class="subtitle">Claude Code Multi-Instance Dashboard</div>
+        </div>
+
+        <div class="instances-grid">
+            <!-- Instance A -->
+            <div class="instance completed">
+                <div class="instance-header">
+                    <div class="instance-id instance-a">🚀 Instance A - Feature Dev</div>
+                    <div class="status-icon">✅</div>
+                </div>
+                <div class="task-name">Task: Add Message Persistence (#1)</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 100%"></div>
+                    <div class="progress-text">100%</div>
+                </div>
+                <div class="files">📁 storageService.ts, ChatWindow.tsx</div>
+                <div class="stats">
+                    <div class="stat stat-add">+234</div>
+                    <div class="stat stat-remove">-12</div>
+                    <div class="stat stat-time">⏱️ 45m</div>
+                </div>
+            </div>
+
+            <!-- Instance B -->
+            <div class="instance working">
+                <div class="instance-header">
+                    <div class="instance-id instance-b">🐛 Instance B - Bug Fixes</div>
+                    <div class="status-icon">🔵</div>
+                </div>
+                <div class="task-name">Task: Room/Channel Support (#2)</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 65%"></div>
+                    <div class="progress-text">65%</div>
+                </div>
+                <div class="files">📁 wakuService.ts, RoomSelector.tsx</div>
+                <div class="stats">
+                    <div class="stat stat-add">+156</div>
+                    <div class="stat stat-remove">-45</div>
+                    <div class="stat stat-time">⏱️ 23m</div>
+                </div>
+            </div>
+
+            <!-- Instance C -->
+            <div class="instance working">
+                <div class="instance-header">
+                    <div class="instance-id instance-c">🎨 Instance C - UI/UX</div>
+                    <div class="status-icon">🔵</div>
+                </div>
+                <div class="task-name">Task: Mobile Experience (#4)</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 40%"></div>
+                    <div class="progress-text">40%</div>
+                </div>
+                <div class="files">📁 ChatWindow.tsx, index.css</div>
+                <div class="stats">
+                    <div class="stat stat-add">+78</div>
+                    <div class="stat stat-remove">-23</div>
+                    <div class="stat stat-time">⏱️ 15m</div>
+                </div>
+            </div>
+
+            <!-- Instance D -->
+            <div class="instance blocked">
+                <div class="instance-header">
+                    <div class="instance-id instance-d">📝 Instance D - Documentation</div>
+                    <div class="status-icon">🔴</div>
+                </div>
+                <div class="task-name">Task: User Profiles (#3)</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 20%"></div>
+                    <div class="progress-text">20%</div>
+                </div>
+                <div class="files">📁 UserProfile.tsx (planned)</div>
+                <div class="stats">
+                    <div class="stat stat-add">+45</div>
+                    <div class="stat stat-remove">-0</div>
+                    <div class="stat stat-time">⏱️ 32m</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="activity-feed">
+            <h2>📡 Live Activity Feed</h2>
+            <div id="activity-container"></div>
+        </div>
+
+        <div class="metrics">
+            <div class="metric-card">
+                <div class="metric-value" style="color: #00ff88;">523</div>
+                <div class="metric-label">Lines Added</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: #ff6b35;">80</div>
+                <div class="metric-label">Lines Removed</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: #00d9ff;">15</div>
+                <div class="metric-label">Files Modified</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: #ffd700;">7</div>
+                <div class="metric-label">Commits</div>
+            </div>
+        </div>
+
+        <div class="network-diagram">
+            <h2 style="margin-bottom: 20px; color: #00d9ff;">Collaboration Network</h2>
+            <div class="node node-a">A</div>
+            <div class="node node-b">B</div>
+            <div class="node node-c">C</div>
+            <div class="node node-d">D</div>
+            <!-- Connection lines would be drawn with SVG or Canvas in real implementation -->
+        </div>
+
+        <div class="footer">
+            Last updated: <span id="timestamp"></span> | Monitoring 4 Claude Code instances
+        </div>
+    </div>
+
+    <script>
+        // Activity feed data
+        const activities = [
+            { time: '12:34:15', instance: 'A', color: '#00ff88', message: 'Completed message persistence implementation' },
+            { time: '12:33:42', instance: 'B', color: '#00d9ff', message: 'Started working on room selector component' },
+            { time: '12:33:10', instance: 'C', color: '#ffd700', message: 'Fixed touch target size for mobile buttons' },
+            { time: '12:32:55', instance: 'D', color: '#ff6b35', message: '⚠️ Blocked - waiting for wakuService updates' },
+            { time: '12:32:20', instance: 'A', color: '#00ff88', message: 'Running tests for storage service...' }
+        ];
+
+        // Update activity feed
+        function updateActivityFeed() {
+            const container = document.getElementById('activity-container');
+            container.innerHTML = activities.map(activity => `
+                <div class="activity-item">
+                    <span class="activity-time">[${activity.time}]</span>
+                    <span style="color: ${activity.color}; font-weight: bold;"> Instance ${activity.instance}:</span>
+                    ${activity.message}
+                </div>
+            `).join('');
+        }
+
+        // Update timestamp
+        function updateTimestamp() {
+            document.getElementById('timestamp').textContent = new Date().toLocaleTimeString();
+        }
+
+        // Simulate progress updates
+        function simulateProgress() {
+            const instances = document.querySelectorAll('.instance');
+            instances.forEach((instance, index) => {
+                if (instance.classList.contains('working')) {
+                    const progressFill = instance.querySelector('.progress-fill');
+                    const progressText = instance.querySelector('.progress-text');
+                    const currentWidth = parseInt(progressFill.style.width);
+                    
+                    if (currentWidth < 95) {
+                        const newWidth = currentWidth + Math.random() * 5;
+                        progressFill.style.width = newWidth + '%';
+                        progressText.textContent = Math.floor(newWidth) + '%';
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        updateActivityFeed();
+        updateTimestamp();
+
+        // Update every second
+        setInterval(() => {
+            updateTimestamp();
+            if (Math.random() < 0.3) {
+                simulateProgress();
+            }
+        }, 1000);
+
+        // Add new activity every 5 seconds
+        setInterval(() => {
+            const newActivity = {
+                time: new Date().toLocaleTimeString(),
+                instance: ['A', 'B', 'C', 'D'][Math.floor(Math.random() * 4)],
+                color: ['#00ff88', '#00d9ff', '#ffd700', '#ff6b35'][Math.floor(Math.random() * 4)],
+                message: [
+                    'Updated component styling',
+                    'Fixed TypeScript error',
+                    'Added new test case',
+                    'Refactored service logic',
+                    'Improved performance'
+                ][Math.floor(Math.random() * 5)]
+            };
+            
+            activities.unshift(newActivity);
+            activities.pop();
+            updateActivityFeed();
+        }, 5000);
+    </script>
+</body>
+</html>
