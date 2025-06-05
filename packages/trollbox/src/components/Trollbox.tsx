@@ -138,33 +138,6 @@ const Trollbox: React.FC<TrollboxProps> = ({
     return accentColorMap[accentColor as keyof typeof accentColorMap]?.[variant] || accentColorMap.blue[variant];
   };
 
-  // Get stored values from localStorage or use defaults
-  const getStoredIsOpen = () => {
-    try {
-      const stored = localStorage.getItem('trollbox-isOpen');
-      return stored ? JSON.parse(stored) : false;
-    } catch {
-      return false;
-    }
-  };
-
-  const getStoredUsername = () => {
-    try {
-      return localStorage.getItem('trollbox-username') || '';
-    } catch {
-      return '';
-    }
-  };
-
-  const getStoredDimensions = () => {
-    try {
-      const stored = localStorage.getItem('trollbox-dimensions');
-      return stored ? JSON.parse(stored) : { width: 320, height: 384 };
-    } catch {
-      return { width: 320, height: 384 };
-    }
-  };
-
   const [isOpen, setIsOpen] = useState(getStoredIsOpen);
   const [isMaximized, setIsMaximized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -584,13 +557,13 @@ const Trollbox: React.FC<TrollboxProps> = ({
                 return (
                   <div key={message.id} className={`text-sm ${isOwn ? 'flex flex-col items-end' : ''}`}>
                     <div className={`flex items-center space-x-1 text-xs text-gray-500 mb-1 ${isOwn ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                      <span className={`font-medium ${isOwn ? getAccentColorClasses('user-label') : `${getColorClasses('button')} text-emerald-600`}`}>
+                      <span className={`font-medium ${isOwn ? getAccentColorClasses('user-label') : 'text-gray-600'}`}>
                         {isOwn ? 'You' : (message.displayName || message.author)}
                       </span>
                       {message.walletAddress && (
                         <>
                           <span>•</span>
-                          <span className={getAccentColorClasses('user-label')} title={message.walletAddress}>
+                          <span className="text-gray-500" title={message.walletAddress}>
                             {walletService.formatAddress(message.walletAddress)}
                           </span>
                         </>
@@ -604,7 +577,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
                     <div className={`rounded p-2 border max-w-[80%] ${
                       isOwn 
                         ? getAccentColorClasses('message')
-                        : 'bg-white border-gray-200'
+                        : 'bg-white border-gray-200 text-gray-800'
                     }`}>
                       {message.text}
                     </div>
