@@ -40,36 +40,36 @@ const Trollbox = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    wakuService.onMessage(async (wakuMessage: WakuMessage) => {
+      console.log('Received Waku message:', wakuMessage);
+      const message: Message = {
+        id: wakuMessage.id,
+        text: wakuMessage.text,
+        timestamp: new Date(wakuMessage.timestamp),
+        author: wakuMessage.author,
+        walletAddress: wakuMessage.walletAddress,
+        signature: wakuMessage.signature
+      };
+      
+      if (message.walletAddress) {
+        console.log('Resolving ENS for message from:', message.walletAddress);
+        message.displayName = await ensService.getDisplayName(
+          message.walletAddress,
+          walletService.formatAddress
+        );
+        console.log('ENS resolved to:', message.displayName);
+      }
+      
+      setMessages(prev => {
+        if (prev.some(m => m.id === message.id)) {
+          return prev;
+        }
+        return [...prev, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      });
+    });
+    
     wakuService.getDispatcher().then(() => {
       setWakuStatus('connected');
-
-      wakuService.onMessage(async (wakuMessage: WakuMessage) => {
-        console.log('Received Waku message:', wakuMessage);
-        const message: Message = {
-          id: wakuMessage.id,
-          text: wakuMessage.text,
-          timestamp: new Date(wakuMessage.timestamp),
-          author: wakuMessage.author,
-          walletAddress: wakuMessage.walletAddress,
-          signature: wakuMessage.signature
-        };
-        
-        if (message.walletAddress) {
-          console.log('Resolving ENS for message from:', message.walletAddress);
-          message.displayName = await ensService.getDisplayName(
-            message.walletAddress,
-            walletService.formatAddress
-          );
-          console.log('ENS resolved to:', message.displayName);
-        }
-        
-        setMessages(prev => {
-          if (prev.some(m => m.id === message.id)) {
-            return prev;
-          }
-          return [...prev, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-        });
-      });
     }).catch(() => {
       setWakuStatus('disconnected');
     });
@@ -251,7 +251,7 @@ const Trollbox = () => {
           <div className="bg-emerald-600 text-white p-3 rounded-t-lg flex items-center justify-between flex-shrink-0">
             <div className="flex items-center space-x-2">
               <span className="text-lg">🧌</span>
-              <span className="font-medium">Trollbox</span>
+              <span className="font-medium">Trollbox (powered by Waku)</span>
               <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} title={`Waku: ${wakuStatus}`} />
             </div>
             <Button
