@@ -3,6 +3,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
+import { copyFileSync } from 'fs';
 
 export default {
   input: 'src/index.ts',
@@ -32,11 +33,20 @@ export default {
       declaration: true,
       declarationDir: 'dist',
     }),
+    {
+      name: 'copy-css',
+      generateBundle() {
+        try {
+          copyFileSync('dist/styles.css', 'dist/trollbox.css');
+        } catch (err) {
+          console.warn('Could not copy CSS file:', err.message);
+        }
+      }
+    }
   ],
   external: [
     'react', 
     'react-dom',
-    // Mark problematic dependencies as external to avoid bundling issues
     '@waku/interfaces',
     '@waku/sdk',
     'waku-dispatcher',
@@ -44,7 +54,6 @@ export default {
     'crypto-js'
   ],
   onwarn(warning, warn) {
-    // Suppress circular dependency warnings from dependencies
     if (warning.code === 'CIRCULAR_DEPENDENCY') {
       return;
     }

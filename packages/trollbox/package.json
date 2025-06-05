@@ -1,7 +1,7 @@
 
 {
   "name": "waku-trollbox",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A decentralized chat component with Web3 wallet integration and Waku messaging",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -11,8 +11,9 @@
     "README.md"
   ],
   "scripts": {
-    "build": "rollup -c",
-    "dev": "rollup -c -w",
+    "build": "npm run build:css && rollup -c",
+    "build:css": "tailwindcss -i ./src/styles/input.css -o ./dist/styles.css --minify",
+    "dev": "npm run build:css && rollup -c -w",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -49,10 +50,13 @@
     "@types/crypto-js": "^4.2.2",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
+    "autoprefixer": "^10.4.20",
     "crypto-js": "^4.2.0",
     "ethers": "^6.14.3",
+    "postcss": "^8.4.47",
     "rollup": "^3.0.0",
     "rollup-plugin-peer-deps-external": "^2.2.4",
+    "tailwindcss": "^3.4.13",
     "typescript": "^5.0.0"
   }
 }

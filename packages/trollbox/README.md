@@ -9,7 +9,7 @@ A decentralized chat component built with React, Web3 wallet integration, and Wa
 - 🔗 Web3 wallet integration (MetaMask and compatible wallets)
 - 🏷️ ENS name resolution for user display names
 - ✅ Message signing and verification
-- 🎨 Fully customizable with Tailwind CSS
+- 🎨 Self-contained styling (no external CSS dependencies)
 - 📱 Responsive design with resizable chat window
 - 🔒 Privacy-focused with no central server dependency
 - 🔐 End-to-end encryption using domain-derived symmetric keys
@@ -20,47 +20,12 @@ A decentralized chat component built with React, Web3 wallet integration, and Wa
 npm install waku-trollbox
 ```
 
+**That's it!** No additional configuration required. The component comes with all necessary styles bundled.
+
 ## Requirements
 
-**Important**: This package requires Tailwind CSS to be installed and configured in your project for styling to work properly.
-
-### Required dependencies in your project:
 - React 16.8+
-- Tailwind CSS
 - A Web3 wallet (MetaMask recommended)
-
-### Installing Tailwind CSS
-
-If you don't have Tailwind CSS installed, follow these steps:
-
-```bash
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-```
-
-Then configure your `tailwind.config.js`:
-
-```js
-/** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [
-    "./src/**/*.{js,ts,jsx,tsx}",
-    "./node_modules/waku-trollbox/dist/**/*.js",
-  ],
-  theme: {
-    extend: {},
-  },
-  plugins: [],
-}
-```
-
-And add these directives to your CSS file:
-
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-```
 
 ## Usage
 
@@ -99,6 +64,15 @@ function App() {
 }
 ```
 
+### Manual CSS Import (Optional)
+
+If the automatic CSS loading doesn't work in your setup, you can manually import the styles:
+
+```tsx
+import 'waku-trollbox/dist/trollbox.css';
+import { Trollbox } from 'waku-trollbox';
+```
+
 ## Configuration
 
 The trollbox automatically generates:
@@ -107,18 +81,18 @@ The trollbox automatically generates:
 
 ## Styling
 
-The component uses Tailwind CSS classes extensively. The main color scheme uses:
-- `emerald-600` for primary actions
-- `gray-50` for backgrounds
-- `white` for cards and inputs
+The component comes with built-in styling that works out of the box. The main color scheme uses:
+- Emerald green for primary actions
+- Clean gray and white design
+- Responsive design that works on all screen sizes
 
-You can customize the appearance by overriding these classes or by wrapping the component in a container with custom CSS.
+If you want to customize the appearance, you can override the CSS classes or wrap the component in a container with custom styles.
 
 ## API
 
 ### Components
 
-- `Trollbox` - Complete trollbox with providers (recommended)
+- `Trollbox` - Complete trollbox with providers and styles (recommended)
 - `TrollboxCore` - Core trollbox component without providers
 - `TrollboxProvider` - Provider component for toast notifications
 
@@ -156,9 +130,9 @@ const displayName = await ensService.getDisplayName(address, fallbackFormatter);
 ### Styling Issues
 
 If the trollbox appears unstyled:
-1. Ensure Tailwind CSS is installed and configured
-2. Check that your `tailwind.config.js` includes the trollbox files in the content array
-3. Verify that Tailwind directives are included in your CSS
+1. Try manually importing the CSS: `import 'waku-trollbox/dist/trollbox.css'`
+2. Check that your bundler supports CSS imports
+3. Ensure the package was installed correctly
 
 ### Connection Issues
 
