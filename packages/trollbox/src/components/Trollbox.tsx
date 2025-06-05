@@ -47,6 +47,8 @@ const Trollbox: React.FC<TrollboxProps> = ({
   const [dimensions, setDimensions] = useState({ width: 320, height: 384 });
   const [isResizing, setIsResizing] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
+  const [lastSeenTimestamp, setLastSeenTimestamp] = useState<number>(Date.now());
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -75,7 +77,14 @@ const Trollbox: React.FC<TrollboxProps> = ({
         if (prev.some(m => m.id === message.id)) {
           return prev;
         }
-        return [...prev, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        const newMessages = [...prev, message].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        
+        // Check if this is a new message (not from current user and after last seen)
+        if (message.timestamp.getTime() > lastSeenTimestamp && !isOpen) {
+          setHasUnreadMessages(true);
+        }
+        
+        return newMessages;
       });
     });
 
@@ -84,7 +93,15 @@ const Trollbox: React.FC<TrollboxProps> = ({
     }).catch(() => {
       setWakuStatus('disconnected');
     });
-  }, [appId, encryptionKey, ephemeral]);
+  }, [appId, encryptionKey, ephemeral, lastSeenTimestamp, isOpen]);
+
+  // Mark messages as read when trollbox is opened
+  useEffect(() => {
+    if (isOpen) {
+      setLastSeenTimestamp(Date.now());
+      setHasUnreadMessages(false);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -192,6 +209,9 @@ const Trollbox: React.FC<TrollboxProps> = ({
     setMessages(prev => [...prev, message]);
     setNewMessage('');
 
+    // Update last seen timestamp when user sends a message
+    setLastSeenTimestamp(timestamp.getTime());
+
     try {
       const wakuMessage: WakuMessage = {
         id: message.id,
@@ -237,11 +257,18 @@ const Trollbox: React.FC<TrollboxProps> = ({
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="rounded-full w-12 h-12 bg-emerald-600 hover:bg-emerald-700 shadow-lg relative"
+          className={`rounded-full w-12 h-12 shadow-lg relative transition-all duration-300 ${
+            hasUnreadMessages 
+              ? 'bg-orange-600 hover:bg-orange-700 animate-pulse' 
+              : 'bg-emerald-600 hover:bg-emerald-700'
+          }`}
           size="icon"
         >
           <MessageCircle className="w-6 h-6" />
           <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full ${getStatusColor()}`} />
+          {hasUnreadMessages && (
+            <div className="absolute -top-1 -left-1 w-3 h-3 bg-red-500 rounded-full animate-bounce" />
+          )}
         </Button>
       )}
 
@@ -263,17 +290,24 @@ const Trollbox: React.FC<TrollboxProps> = ({
             <Grip className="w-3 h-3" />
           </div>
 
-          <div className="bg-emerald-600 text-white p-3 rounded-t-lg flex items-center justify-between flex-shrink-0">
+          <div className={`text-white p-3 rounded-t-lg flex items-center justify-between flex-shrink-0 transition-colors duration-300 ${
+            hasUnreadMessages ? 'bg-orange-600' : 'bg-emerald-600'
+          }`}>
             <div className="flex items-center space-x-2">
               <span className="text-lg">🧌</span>
-              <span className="font-medium">Trollbox (powered by Waku)</span>
+              <span className="font-medium">
+                Trollbox (powered by Waku)
+                {hasUnreadMessages && <span className="ml-1 text-yellow-300">●</span>}
+              </span>
               <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} title={`Waku: ${wakuStatus}`} />
             </div>
             <Button
               onClick={() => setIsOpen(false)}
               variant="ghost"
               size="icon"
-              className="text-white hover:bg-emerald-700 h-8 w-8"
+              className={`text-white h-8 w-8 ${
+                hasUnreadMessages ? 'hover:bg-orange-700' : 'hover:bg-emerald-700'
+              }`}
             >
               <X className="w-4 h-4" />
             </Button>
