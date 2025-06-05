@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "build": "npm run build:css && rollup -c",
-    "build:css": "tailwindcss -i ./src/styles/input.css -o ./dist/styles.css --minify",
+    "build:css": "tailwindcss -i ./src/styles/input.css -o ./dist/styles.css --minify && tailwindcss -i ./src/styles/input.css -o ./dist/trollbox.css --minify",
     "dev": "npm run build:css && rollup -c -w",
     "prepublishOnly": "npm run build"
   },
@@ -38,6 +38,7 @@
   "dependencies": {
     "@radix-ui/react-toast": "^1.2.1",
     "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-scroll-area": "^1.1.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.462.0",
