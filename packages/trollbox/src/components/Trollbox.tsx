@@ -188,6 +188,14 @@ const Trollbox: React.FC<TrollboxProps> = ({
     }
   };
 
+  // Helper function to check if a message is from the current user
+  const isOwnMessage = (message: Message) => {
+    if (wallet && message.walletAddress) {
+      return wallet.address.toLowerCase() === message.walletAddress.toLowerCase();
+    }
+    return message.author === username;
+  };
+
   // Get dynamic styles for maximized vs normal view
   const getContainerStyles = () => {
     if (isMaximized) {
@@ -446,31 +454,38 @@ const Trollbox: React.FC<TrollboxProps> = ({
             onScrollCapture={checkIfAtBottom}
           >
             <div className="p-3 space-y-2">
-              {messages.map((message) => (
-                <div key={message.id} className="text-sm">
-                  <div className="flex items-center space-x-1 text-xs text-gray-500 mb-1">
-                    <span className="font-medium text-emerald-600">
-                      {message.displayName || message.author}
-                    </span>
-                    {message.walletAddress && (
-                      <>
-                        <span>•</span>
-                        <span className="text-blue-600" title={message.walletAddress}>
-                          {walletService.formatAddress(message.walletAddress)}
-                        </span>
-                      </>
-                    )}
-                    <span>•</span>
-                    <span>{formatTime(message.timestamp)}</span>
-                    {message.signature && (
-                      <span className="text-green-600" title="Verified">✓</span>
-                    )}
+              {messages.map((message) => {
+                const isOwn = isOwnMessage(message);
+                return (
+                  <div key={message.id} className={`text-sm ${isOwn ? 'flex flex-col items-end' : ''}`}>
+                    <div className={`flex items-center space-x-1 text-xs text-gray-500 mb-1 ${isOwn ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                      <span className={`font-medium ${isOwn ? 'text-blue-600' : 'text-emerald-600'}`}>
+                        {isOwn ? 'You' : (message.displayName || message.author)}
+                      </span>
+                      {message.walletAddress && (
+                        <>
+                          <span>•</span>
+                          <span className="text-blue-600" title={message.walletAddress}>
+                            {walletService.formatAddress(message.walletAddress)}
+                          </span>
+                        </>
+                      )}
+                      <span>•</span>
+                      <span>{formatTime(message.timestamp)}</span>
+                      {message.signature && (
+                        <span className="text-green-600" title="Verified">✓</span>
+                      )}
+                    </div>
+                    <div className={`rounded p-2 border max-w-[80%] ${
+                      isOwn 
+                        ? 'bg-blue-500 text-white border-blue-500' 
+                        : 'bg-white border-gray-200'
+                    }`}>
+                      {message.text}
+                    </div>
                   </div>
-                  <div className="bg-white rounded p-2 border">
-                    {message.text}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </ScrollArea>
 
