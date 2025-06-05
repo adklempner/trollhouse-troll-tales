@@ -6,6 +6,7 @@ import { wakuService, WakuMessage } from '../services/wakuService';
 import { walletService, WalletInfo } from '../services/walletService';
 import { ensService } from '../services/ensService';
 import WalletConnection from './WalletConnection';
+import EmojiPicker from './EmojiPicker';
 import { useToast } from '../hooks/use-toast';
 
 interface Message {
@@ -33,7 +34,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: '🧌 Welcome to the troll chat! Set a username or connect your wallet to start chatting!',
+      text: '🧌 Welcome to the troll chat! Set a username or connect your wallet to start chatting! 🎉',
       timestamp: new Date(Date.now() - 1000 * 60 * 5),
       author: 'Bridge Troll'
     }
@@ -212,6 +213,10 @@ const Trollbox: React.FC<TrollboxProps> = ({
     }
   };
 
+  const handleEmojiSelect = (emoji: string) => {
+    setNewMessage(prev => prev + emoji);
+  };
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', { 
       hour: '2-digit', 
@@ -307,7 +312,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
             
             <div className="flex space-x-2">
               <Input
-                placeholder="Your troll name"
+                placeholder="Your troll name 👹"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="text-sm flex-1"
@@ -316,12 +321,13 @@ const Trollbox: React.FC<TrollboxProps> = ({
             
             <form onSubmit={handleSendMessage} className="flex space-x-2">
               <Input
-                placeholder={username.trim() ? "Type your message..." : "Set a username first..."}
+                placeholder={username.trim() ? "Type your message... 💬" : "Set a username first... 🏷️"}
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 className="flex-1 text-sm"
                 disabled={!username.trim()}
               />
+              <EmojiPicker onEmojiSelect={handleEmojiSelect} />
               <Button 
                 type="submit" 
                 size="icon" 
