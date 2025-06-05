@@ -24,13 +24,120 @@ interface TrollboxProps {
   appId?: string;
   encryptionKey?: string;
   ephemeral?: boolean;
+  primaryColor?: string;
+  accentColor?: string;
 }
 
 const Trollbox: React.FC<TrollboxProps> = ({ 
   appId,
   encryptionKey,
-  ephemeral = true
+  ephemeral = true,
+  primaryColor = 'emerald',
+  accentColor = 'blue'
 }) => {
+  // Get stored values from localStorage or use defaults
+  const getStoredIsOpen = () => {
+    try {
+      const stored = localStorage.getItem('trollbox-isOpen');
+      return stored ? JSON.parse(stored) : false;
+    } catch {
+      return false;
+    }
+  };
+
+  const getStoredUsername = () => {
+    try {
+      return localStorage.getItem('trollbox-username') || '';
+    } catch {
+      return '';
+    }
+  };
+
+  const getStoredDimensions = () => {
+    try {
+      const stored = localStorage.getItem('trollbox-dimensions');
+      return stored ? JSON.parse(stored) : { width: 320, height: 384 };
+    } catch {
+      return { width: 320, height: 384 };
+    }
+  };
+
+  // Helper function to get color classes based on the primary color
+  const getColorClasses = (variant: 'button' | 'header' | 'header-hover' | 'button-hover' | 'unread-button' | 'unread-header') => {
+    const colorMap = {
+      emerald: {
+        button: 'bg-emerald-600',
+        'button-hover': 'hover:bg-emerald-700',
+        header: 'bg-emerald-600',
+        'header-hover': 'hover:bg-emerald-700',
+        'unread-button': 'bg-orange-600 hover:bg-orange-700',
+        'unread-header': 'bg-orange-600'
+      },
+      blue: {
+        button: 'bg-blue-600',
+        'button-hover': 'hover:bg-blue-700',
+        header: 'bg-blue-600',
+        'header-hover': 'hover:bg-blue-700',
+        'unread-button': 'bg-orange-600 hover:bg-orange-700',
+        'unread-header': 'bg-orange-600'
+      },
+      purple: {
+        button: 'bg-purple-600',
+        'button-hover': 'hover:bg-purple-700',
+        header: 'bg-purple-600',
+        'header-hover': 'hover:bg-purple-700',
+        'unread-button': 'bg-orange-600 hover:bg-orange-700',
+        'unread-header': 'bg-orange-600'
+      },
+      red: {
+        button: 'bg-red-600',
+        'button-hover': 'hover:bg-red-700',
+        header: 'bg-red-600',
+        'header-hover': 'hover:bg-red-700',
+        'unread-button': 'bg-orange-600 hover:bg-orange-700',
+        'unread-header': 'bg-orange-600'
+      },
+      indigo: {
+        button: 'bg-indigo-600',
+        'button-hover': 'hover:bg-indigo-700',
+        header: 'bg-indigo-600',
+        'header-hover': 'hover:bg-indigo-700',
+        'unread-button': 'bg-orange-600 hover:bg-orange-700',
+        'unread-header': 'bg-orange-600'
+      }
+    };
+
+    return colorMap[primaryColor as keyof typeof colorMap]?.[variant] || colorMap.emerald[variant];
+  };
+
+  // Helper function to get accent color classes
+  const getAccentColorClasses = (variant: 'message' | 'user-label') => {
+    const accentColorMap = {
+      blue: {
+        message: 'bg-blue-500 text-white border-blue-500',
+        'user-label': 'text-blue-600'
+      },
+      green: {
+        message: 'bg-green-500 text-white border-green-500',
+        'user-label': 'text-green-600'
+      },
+      purple: {
+        message: 'bg-purple-500 text-white border-purple-500',
+        'user-label': 'text-purple-600'
+      },
+      red: {
+        message: 'bg-red-500 text-white border-red-500',
+        'user-label': 'text-red-600'
+      },
+      indigo: {
+        message: 'bg-indigo-500 text-white border-indigo-500',
+        'user-label': 'text-indigo-600'
+      }
+    };
+
+    return accentColorMap[accentColor as keyof typeof accentColorMap]?.[variant] || accentColorMap.blue[variant];
+  };
+
   // Get stored values from localStorage or use defaults
   const getStoredIsOpen = () => {
     try {
@@ -401,8 +508,8 @@ const Trollbox: React.FC<TrollboxProps> = ({
           onClick={() => setIsOpen(true)}
           className={`rounded-full w-12 h-12 shadow-lg relative transition-all duration-300 ${
             hasUnreadMessages 
-              ? 'bg-orange-600 hover:bg-orange-700 animate-pulse' 
-              : 'bg-emerald-600 hover:bg-emerald-700'
+              ? getColorClasses('unread-button')
+              : `${getColorClasses('button')} ${getColorClasses('button-hover')}`
           }`}
           size="icon"
         >
@@ -431,7 +538,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
           )}
 
           <div className={`text-white p-3 rounded-t-lg flex items-center justify-between flex-shrink-0 transition-colors duration-300 ${
-            hasUnreadMessages ? 'bg-orange-600' : 'bg-emerald-600'
+            hasUnreadMessages ? getColorClasses('unread-header') : getColorClasses('header')
           }`}>
             <div className="flex items-center space-x-2">
               <span className="text-lg">🧌</span>
@@ -447,7 +554,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
                 variant="ghost"
                 size="icon"
                 className={`text-white h-8 w-8 ${
-                  hasUnreadMessages ? 'hover:bg-orange-700' : 'hover:bg-emerald-700'
+                  hasUnreadMessages ? 'hover:bg-orange-700' : getColorClasses('header-hover')
                 }`}
                 title={isMaximized ? "Restore window" : "Maximize window"}
               >
@@ -458,7 +565,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
                 variant="ghost"
                 size="icon"
                 className={`text-white h-8 w-8 ${
-                  hasUnreadMessages ? 'hover:bg-orange-700' : 'hover:bg-emerald-700'
+                  hasUnreadMessages ? 'hover:bg-orange-700' : getColorClasses('header-hover')
                 }`}
               >
                 <X className="w-4 h-4" />
@@ -477,13 +584,13 @@ const Trollbox: React.FC<TrollboxProps> = ({
                 return (
                   <div key={message.id} className={`text-sm ${isOwn ? 'flex flex-col items-end' : ''}`}>
                     <div className={`flex items-center space-x-1 text-xs text-gray-500 mb-1 ${isOwn ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                      <span className={`font-medium ${isOwn ? 'text-blue-600' : 'text-emerald-600'}`}>
+                      <span className={`font-medium ${isOwn ? getAccentColorClasses('user-label') : `${getColorClasses('button')} text-emerald-600`}`}>
                         {isOwn ? 'You' : (message.displayName || message.author)}
                       </span>
                       {message.walletAddress && (
                         <>
                           <span>•</span>
-                          <span className="text-blue-600" title={message.walletAddress}>
+                          <span className={getAccentColorClasses('user-label')} title={message.walletAddress}>
                             {walletService.formatAddress(message.walletAddress)}
                           </span>
                         </>
@@ -496,7 +603,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
                     </div>
                     <div className={`rounded p-2 border max-w-[80%] ${
                       isOwn 
-                        ? 'bg-blue-500 text-white border-blue-500' 
+                        ? getAccentColorClasses('message')
                         : 'bg-white border-gray-200'
                     }`}>
                       {message.text}
@@ -531,7 +638,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
               <Button 
                 type="submit" 
                 size="icon" 
-                className="bg-emerald-600 hover:bg-emerald-700"
+                className={`${getColorClasses('button')} ${getColorClasses('button-hover')}`}
                 disabled={wakuStatus !== 'connected' || !username.trim() || isSigning}
               >
                 <Send className="w-4 h-4" />

@@ -10,6 +10,7 @@ A decentralized chat component built with React, Web3 wallet integration, and Wa
 - 🏷️ ENS name resolution for user display names
 - ✅ Message signing and verification
 - 🎨 Self-contained styling (no external CSS dependencies)
+- 🌈 Customizable color themes
 - 📱 Responsive design with resizable chat window
 - 🔒 Privacy-focused with no central server dependency
 - 🔐 End-to-end encryption using domain-derived symmetric keys
@@ -44,7 +45,24 @@ function App() {
 }
 ```
 
-### Advanced Usage with Configuration
+### Usage with Custom Colors
+
+```tsx
+import { Trollbox } from 'waku-trollbox';
+
+function App() {
+  return (
+    <div className="App">
+      <Trollbox 
+        primaryColor="purple"
+        accentColor="indigo"
+      />
+    </div>
+  );
+}
+```
+
+### Advanced Usage with Full Configuration
 
 ```tsx
 import { Trollbox } from 'waku-trollbox';
@@ -56,6 +74,8 @@ function App() {
         appId="my-custom-app"
         encryptionKey="my-secret-key-32-chars-long"
         ephemeral={true}
+        primaryColor="indigo"
+        accentColor="purple"
       />
     </div>
   );
@@ -69,6 +89,41 @@ function App() {
 | `appId` | `string` | `window.location.hostname` | Custom identifier for generating content topic. Allows apps to have isolated chat rooms. |
 | `encryptionKey` | `string` | Domain-derived key | Custom 32-character encryption key. If not provided, a key is derived from the domain. |
 | `ephemeral` | `boolean` | `false` | Whether messages should be ephemeral (not stored) on the Waku network. When `true`, only live messages are shown. |
+| `primaryColor` | `string` | `'emerald'` | Primary color theme for the trollbox UI. Options: `'emerald'`, `'blue'`, `'purple'`, `'red'`, `'indigo'` |
+| `accentColor` | `string` | `'blue'` | Accent color for user messages and highlights. Options: `'blue'`, `'green'`, `'purple'`, `'red'`, `'indigo'` |
+
+### Color Customization
+
+The trollbox supports theme customization through `primaryColor` and `accentColor` props:
+
+#### Primary Color
+Controls the main UI elements like header, buttons, and main branding:
+```tsx
+<Trollbox primaryColor="purple" />
+```
+
+Available options: `emerald`, `blue`, `purple`, `red`, `indigo`
+
+#### Accent Color
+Controls user message bubbles and user-specific highlights:
+```tsx
+<Trollbox accentColor="green" />
+```
+
+Available options: `blue`, `green`, `purple`, `red`, `indigo`
+
+#### Color Combinations
+You can mix and match colors for unique themes:
+```tsx
+// Ocean theme
+<Trollbox primaryColor="blue" accentColor="indigo" />
+
+// Forest theme  
+<Trollbox primaryColor="emerald" accentColor="green" />
+
+// Royal theme
+<Trollbox primaryColor="purple" accentColor="indigo" />
+```
 
 ### Using Custom Props
 
@@ -113,6 +168,8 @@ function App() {
         <TrollboxCore 
           appId="my-app"
           ephemeral={true}
+          primaryColor="indigo"
+          accentColor="purple"
         />
         {/* Your other components */}
       </TrollboxProvider>
@@ -128,12 +185,14 @@ Without any props, the trollbox automatically generates:
 - A unique content topic based on your domain for isolated chat rooms
 - A symmetric encryption key derived from your domain for secure messaging
 - Persistent message storage on the Waku network
+- Emerald primary theme with blue accents
 
 ### Custom Configuration
 With props, you can:
 - Create isolated chat rooms using custom `appId`
 - Use shared encryption keys across different domains
 - Enable ephemeral messaging for privacy
+- Customize colors to match your app's branding
 
 ## Security Features
 
@@ -194,10 +253,10 @@ If messages aren't sending:
 If you want separate chat rooms for different parts of your app:
 ```tsx
 // Lobby chat
-<Trollbox appId="lobby" />
+<Trollbox appId="lobby" primaryColor="emerald" />
 
 // Game chat  
-<Trollbox appId="game-room-123" />
+<Trollbox appId="game-room-123" primaryColor="red" />
 ```
 
 ## License

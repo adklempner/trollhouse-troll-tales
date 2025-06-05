@@ -7,6 +7,8 @@ interface TrollboxWrapperProps {
   appId?: string;
   encryptionKey?: string;
   ephemeral?: boolean;
+  primaryColor?: string;
+  accentColor?: string;
 }
 
 const TrollboxWrapper: React.FC<TrollboxWrapperProps> = (props) => {
