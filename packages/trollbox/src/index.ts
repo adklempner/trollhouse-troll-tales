@@ -7,12 +7,12 @@ export * from './services/wakuService';
 export * from './services/walletService';
 export * from './services/ensService';
 
-// CSS import helper for manual import
-export const importTrollboxCSS = () => {
-  if (typeof document !== 'undefined') {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'waku-trollbox/dist/trollbox.css';
-    document.head.appendChild(link);
+// Auto-import styles for convenience
+if (typeof document !== 'undefined') {
+  try {
+    require('../dist/trollbox.css');
+  } catch (e) {
+    // CSS not found, user may need to import manually
+    console.warn('waku-trollbox: Auto-import of CSS failed. You may need to manually import "waku-trollbox/dist/trollbox.css"');
   }
-};
+}

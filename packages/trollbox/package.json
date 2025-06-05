@@ -1,7 +1,7 @@
 
 {
   "name": "waku-trollbox",
-  "version": "0.0.8",
+  "version": "0.0.10",
   "description": "A decentralized chat component with Web3 wallet integration and Waku messaging",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "build": "npm run build:css && rollup -c",
-    "build:css": "tailwindcss -i ./src/styles/input.css -o ./dist/styles.css --minify && tailwindcss -i ./src/styles/input.css -o ./dist/trollbox.css --minify",
+    "build:css": "tailwindcss -i ./src/styles/input.css -o ./dist/styles.css --minify",
     "dev": "npm run build:css && rollup -c -w",
     "prepublishOnly": "npm run build"
   },
