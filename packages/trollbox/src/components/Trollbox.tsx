@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Grip } from 'lucide-react';
+import { MessageCircle, X, Send, Grip, Maximize, Minimize } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { ScrollArea } from '../ui/scroll-area';
@@ -33,6 +32,7 @@ const Trollbox: React.FC<TrollboxProps> = ({
   ephemeral = true
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -150,9 +150,32 @@ const Trollbox: React.FC<TrollboxProps> = ({
     }
   };
 
+  // Get dynamic styles for maximized vs normal view
+  const getContainerStyles = () => {
+    if (isMaximized) {
+      return {
+        position: 'fixed' as const,
+        top: '20px',
+        left: '20px',
+        right: '20px',
+        bottom: '20px',
+        width: 'auto',
+        height: 'auto',
+        zIndex: 1000,
+      };
+    }
+    return {
+      width: `${dimensions.width}px`,
+      height: `${dimensions.height}px`,
+      minWidth: '280px',
+      minHeight: '200px'
+    };
+  };
+
+  // Resize handling useEffect
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing || !chatRef.current) return;
+      if (!isResizing || !chatRef.current || isMaximized) return;
       
       const deltaX = e.clientX - dragStart.x;
       const deltaY = e.clientY - dragStart.y;
@@ -180,9 +203,10 @@ const Trollbox: React.FC<TrollboxProps> = ({
       document.body.style.cursor = '';
       document.body.style.userSelect = '';
     };
-  }, [isResizing, dragStart]);
+  }, [isResizing, dragStart, isMaximized]);
 
   const handleResizeStart = (e: React.MouseEvent) => {
+    if (isMaximized) return;
     e.preventDefault();
     setDragStart({
       x: e.clientX,
@@ -191,6 +215,10 @@ const Trollbox: React.FC<TrollboxProps> = ({
       height: dimensions.height
     });
     setIsResizing(true);
+  };
+
+  const handleMaximize = () => {
+    setIsMaximized(!isMaximized);
   };
 
   const handleWalletChange = async (newWallet: WalletInfo | null) => {
@@ -323,20 +351,17 @@ const Trollbox: React.FC<TrollboxProps> = ({
         <div 
           ref={chatRef}
           className="bg-white border border-gray-200 rounded-lg shadow-xl flex flex-col overflow-hidden relative"
-          style={{ 
-            width: `${dimensions.width}px`, 
-            height: `${dimensions.height}px`,
-            minWidth: '280px',
-            minHeight: '200px'
-          }}
+          style={getContainerStyles()}
           onClick={handleTrollboxClick}
         >
-          <div
-            className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize flex items-center justify-center text-gray-400 hover:text-gray-600 z-10"
-            onMouseDown={handleResizeStart}
-          >
-            <Grip className="w-3 h-3" />
-          </div>
+          {!isMaximized && (
+            <div
+              className="absolute top-0 left-0 w-4 h-4 cursor-nw-resize flex items-center justify-center text-gray-400 hover:text-gray-600 z-10"
+              onMouseDown={handleResizeStart}
+            >
+              <Grip className="w-3 h-3" />
+            </div>
+          )}
 
           <div className={`text-white p-3 rounded-t-lg flex items-center justify-between flex-shrink-0 transition-colors duration-300 ${
             hasUnreadMessages ? 'bg-orange-600' : 'bg-emerald-600'
@@ -349,16 +374,29 @@ const Trollbox: React.FC<TrollboxProps> = ({
               </span>
               <div className={`w-2 h-2 rounded-full ${getStatusColor()}`} title={`Waku: ${wakuStatus}`} />
             </div>
-            <Button
-              onClick={() => setIsOpen(false)}
-              variant="ghost"
-              size="icon"
-              className={`text-white h-8 w-8 ${
-                hasUnreadMessages ? 'hover:bg-orange-700' : 'hover:bg-emerald-700'
-              }`}
-            >
-              <X className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center space-x-1">
+              <Button
+                onClick={handleMaximize}
+                variant="ghost"
+                size="icon"
+                className={`text-white h-8 w-8 ${
+                  hasUnreadMessages ? 'hover:bg-orange-700' : 'hover:bg-emerald-700'
+                }`}
+                title={isMaximized ? "Restore window" : "Maximize window"}
+              >
+                {isMaximized ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+              </Button>
+              <Button
+                onClick={() => setIsOpen(false)}
+                variant="ghost"
+                size="icon"
+                className={`text-white h-8 w-8 ${
+                  hasUnreadMessages ? 'hover:bg-orange-700' : 'hover:bg-emerald-700'
+                }`}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           <ScrollArea 
